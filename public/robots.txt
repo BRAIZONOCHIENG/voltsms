@@ -1,0 +1,17 @@
+# VoltSMS Robots.txt
+# https://voltsms.com
+
+User-agent: *
+Allow: /
+
+# Block admin and API routes
+Disallow: /admin
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Sitemap
+Sitemap: https://voltsms.com/sitemap.xml

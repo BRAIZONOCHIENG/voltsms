@@ -1,0 +1,11 @@
+src/app/dashboard/page.tsx(61,42): error TS2304: Cannot find name 'Order'.
+src/app/dashboard/page.tsx(65,60): error TS2304: Cannot find name 'Service'.
+src/app/dashboard/page.tsx(67,60): error TS2304: Cannot find name 'Country'.
+src/app/dashboard/page.tsx(67,69): error TS2304: Cannot find name 'COUNTRIES'.
+src/app/dashboard/page.tsx(87,16): error TS2304: Cannot find name 'MOCK_SERVICES'.
+src/app/dashboard/page.tsx(87,37): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/app/dashboard/page.tsx(287,50): error TS2304: Cannot find name 'COUNTRIES'.
+src/app/dashboard/page.tsx(287,65): error TS7006: Parameter 'country' implicitly has an 'any' type.
+src/app/dashboard/page.tsx(369,61): error TS2322: Type '{ height: number; rowCount: any; rowHeight: number; width: string; rowProps: { items: any; onSelect: (svc: Service) => void; selectedId: any; }; rowComponent: ({ index, style, items, onSelect, selectedId }: any) => Element; }' is not assignable to type 'IntrinsicAttributes & Omit<HTMLAttributes<HTMLDivElement>, "onResize"> & { children?: ReactNode; ... 11 more ...; tagName?: "div" | undefined; }'.
+  Property 'height' does not exist on type 'IntrinsicAttributes & Omit<HTMLAttributes<HTMLDivElement>, "onResize"> & { children?: ReactNode; ... 11 more ...; tagName?: "div" | undefined; }'.
+src/app/dashboard/page.tsx(375,81): error TS2304: Cannot find name 'Service'.

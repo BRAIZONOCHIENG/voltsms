@@ -1,0 +1,122 @@
+
+> frontend@0.1.0 lint
+> eslint
+
+
+/home/braizon/validator.ai/frontend/src/app/api/balance/route.ts
+  35:39  warning  'createError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/braizon/validator.ai/frontend/src/app/api/cancel/route.ts
+  65:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/braizon/validator.ai/frontend/src/app/api/check/route.ts
+  49:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/braizon/validator.ai/frontend/src/app/api/deposit/route.ts
+   90:59  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:18  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  187:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/braizon/validator.ai/frontend/src/app/api/payment/verify/route.ts
+   37:39  warning  'amount' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  116:17  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+/home/braizon/validator.ai/frontend/src/app/api/price/route.ts
+  60:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/braizon/validator.ai/frontend/src/app/api/webhook/oxapay/route.ts
+  13:52  warning  'trackId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/braizon/validator.ai/frontend/src/app/dashboard/page.tsx
+  481:12  warning  React Hook useEffect has an unnecessary dependency: 'selectedCountry.code'. Either exclude it or remove the dependency array. Outer scope values like 'selectedCountry.code' aren't valid dependencies because mutating them doesn't re-render the component                             react-hooks/exhaustive-deps
+  497:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  774:53  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  803:57  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/braizon/validator.ai/frontend/src/app/disclaimer/page.tsx
+  13:86   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  13:92   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  15:80   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  15:86   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  15:92   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  15:105  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/home/braizon/validator.ai/frontend/src/app/forgot-password/page.tsx
+  26:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/braizon/validator.ai/frontend/src/app/login/page.tsx
+  31:23  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  90:28  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/braizon/validator.ai/frontend/src/app/page.tsx
+    4:10   warning  'AnimatedBackground' is defined but never used                   @typescript-eslint/no-unused-vars
+    8:149  warning  'FaWallet' is defined but never used                             @typescript-eslint/no-unused-vars
+   97:108  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  287:87   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  289:107  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/braizon/validator.ai/frontend/src/app/register/page.tsx
+  13:11  warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  23:21  warning  'data' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  35:23  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+/home/braizon/validator.ai/frontend/src/app/reset-password/page.tsx
+   4:8   warning  'Link' is defined but never used          @typescript-eslint/no-unused-vars
+  38:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/braizon/validator.ai/frontend/src/app/support/page.tsx
+  27:60   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  27:72   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  32:97   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  34:119  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/braizon/validator.ai/frontend/src/app/terms/page.tsx
+  16:65   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  16:71   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  16:122  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  16:130  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/home/braizon/validator.ai/frontend/src/components/AnimatedBackground.tsx
+  3:10  warning  'useRef' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/braizon/validator.ai/frontend/src/components/Footer.tsx
+  2:8  warning  'Link' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/braizon/validator.ai/frontend/src/components/MagneticButton.tsx
+  5:66  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/braizon/validator.ai/frontend/src/components/Navbar.tsx
+  15:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/braizon/validator.ai/frontend/src/components/Navbar.tsx:15:9
+  13 |     useEffect(() => {
+  14 |         const token = localStorage.getItem('token');
+> 15 |         setIsLoggedIn(!!token);
+     |         ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  16 |     }, []);
+  17 |
+  18 |     const handleLogout = () => {  react-hooks/set-state-in-effect
+
+/home/braizon/validator.ai/frontend/src/components/PayPalTrigger.tsx
+    8:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+   14:18  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+   86:35  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+   92:41  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+   92:46  warning  'actions' is defined but never used                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   92:55  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+   95:32  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  101:8   warning  React Hook useEffect has missing dependencies: 'getAccessToken', 'onError', and 'onSuccess'. Either include them or remove the dependency array. If 'getAccessToken' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+
+/home/braizon/validator.ai/frontend/src/components/PaystackTrigger.tsx
+  11:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 56 problems (39 errors, 17 warnings)
+
