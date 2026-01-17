@@ -72,16 +72,30 @@ function isPremiumProxy(proxy: any): boolean {
     return !isDatacenter;
 }
 
-export async function getPremiumProxies() {
+export interface WebshareProxy {
+    id?: string;
+    proxy_address?: string;
+    ip: string;
+    port: number;
+    username?: string;
+    password?: string;
+    country_code: string;
+    asn_name?: string;
+    city_name?: string;
+    valid?: boolean;
+    created_at?: string;
+}
+
+export async function getPremiumProxies(): Promise<WebshareProxy[]> {
     // Webshare is now dedicated to free proxies only. 
     // New API will be added later for premium.
     return [];
 }
 
-export async function getFreeProxies() {
+export async function getFreeProxies(): Promise<WebshareProxy[]> {
     // Return ALL proxies from Webshare as free
     const all = await getProxyList();
-    return all;
+    return all as WebshareProxy[];
 }
 
 export async function buyProxy(userId: string, countryCode: string, isp: string = 'any') {

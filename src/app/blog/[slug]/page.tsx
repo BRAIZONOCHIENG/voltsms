@@ -97,7 +97,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                         <hr className="border-white/10 my-8" />
 
                         <p>
-                            (This is a placeholder for the actual blog content. In a real implementation, this would be fetched from the database based on the slug <code>{params.slug}</code>).
+                            (This is a placeholder for the actual blog content. In a real implementation, this would be fetched from the database based on the slug <code>{slug}</code>).
                         </p>
 
                         <h2>Why Use a Virtual Number?</h2>
