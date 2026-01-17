@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     if (!currency) return NextResponse.json({ detail: 'Currency required' }, { status: 400 });
 
     try {
-        const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/webhook/oxapay`;
+        const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/webhook/oxapay`;
 
         // 3. Request Static Address
         // Header Auth required as per debug.

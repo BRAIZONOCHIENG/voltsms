@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.vercel.app';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

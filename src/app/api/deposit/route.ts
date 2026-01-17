@@ -77,8 +77,8 @@ export async function POST(req: NextRequest) {
                     application_context: {
                         brand_name: "VoltSMS",
                         user_action: "PAY_NOW",
-                        return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`,
-                        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`
+                        return_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/dashboard`,
+                        cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/dashboard`
                     }
                 })
             });
@@ -106,8 +106,8 @@ export async function POST(req: NextRequest) {
 
     if (method === 'crypto') {
         try {
-            const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/webhook/oxapay`;
-            const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`;
+            const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/webhook/oxapay`;
+            const returnUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/dashboard`;
 
             const res = await fetch('https://api.oxapay.com/merchants/request', {
                 method: 'POST',
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
     if (method === 'card' || method === 'mpesa') {
         try {
             const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY!;
-            const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`;
+            const returnUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/dashboard`;
 
             const RATE_USD_TO_KES = 130; // Fixed rate for now
             const amountInKES = amount * RATE_USD_TO_KES;
