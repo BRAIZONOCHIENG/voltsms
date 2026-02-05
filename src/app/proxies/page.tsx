@@ -227,7 +227,7 @@ export default function ProxyStorePage() {
                                 {/* Deposit Section */}
                                 {activeTab === 'deposit' && (
                                     <DepositSection
-                                        userEmail={userEmail}
+
                                         onDepositSuccess={() => {
                                             fetchUserData(); // Update balance
                                             alert("Funds added successfully!");

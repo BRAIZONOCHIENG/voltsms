@@ -20,7 +20,7 @@ export async function GET(req: Request) {
     }
 
     try {
-        const client = new PVAPinsClient(PVAPINS_API_KEY, PVAPINS_USER_ID!);
+        const client = new PVAPinsClient(PVAPINS_API_KEY);
         const balance = await client.getBalance();
 
         console.log(`[Balance Check] Current PVAPins Balance: $${balance}`);

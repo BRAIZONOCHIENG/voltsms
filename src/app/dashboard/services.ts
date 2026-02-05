@@ -3,6 +3,7 @@ export interface Service {
     name: string;
     price: number;
     category: string;
+    icon?: string | null;
 }
 
 // Map service IDs to Categories based on keywords (fallback)

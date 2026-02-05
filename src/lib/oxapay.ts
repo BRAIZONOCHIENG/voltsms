@@ -8,7 +8,7 @@ export interface PayoutRequest {
 
 export interface PayoutResponse {
     success: boolean;
-    message?: string;
+    message: string;
     data?: any;
 }
 
@@ -59,7 +59,7 @@ export async function sendPayout(req: PayoutRequest): Promise<PayoutResponse> {
         const data = await res.json();
 
         if (data.status === 200 || data.success) {
-            return { success: true, data: data };
+            return { success: true, message: "Payout Success", data: data };
         } else {
             console.error("OxaPay Payout Failed:", data);
             return { success: false, message: data.message || "Payout Failed" };
