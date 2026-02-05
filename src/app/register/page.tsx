@@ -39,8 +39,13 @@ export default function Register() {
                 return;
             }
 
-            // User registered, potentially auto-confirmed if disabled in Supabase, 
-            // but we show the check email screen regardless to force the flow.
+            // Check for duplicate email (Supabase generic success for existing users)
+            if (data.user && data.user.identities && data.user.identities.length === 0) {
+                setError('Email already registered. Please log in.');
+                return;
+            }
+
+            // User registered
             if (data.user) {
                 setRegistrationSuccess(true);
             }
@@ -139,8 +144,7 @@ export default function Register() {
                             </label>
                         </div>
 
-                        {/* Turnstile Captcha */}
-                        {/* Turnstile Captcha */}
+
 
 
                         <button type="submit" className="w-full bg-white text-black py-4 rounded-xl font-bold text-lg hover:bg-stone-200 hover:shadow-lg hover:-translate-y-0.5 transition-all">

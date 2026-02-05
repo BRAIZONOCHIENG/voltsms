@@ -81,6 +81,11 @@ export default function DepositSection({ userToken, onDepositSuccess }: DepositS
     const [selectedCoin] = useState('USDT'); // Default to USDT for API compatibility
     const [loading, setLoading] = useState(false);
 
+    // Reset loading state if the user navigates back to this page
+    useEffect(() => {
+        setLoading(false);
+    }, []);
+
     const getAccessToken = async () => {
         if (userToken) return userToken;
         const { data: { session }, error } = await supabase.auth.refreshSession();
