@@ -33,7 +33,6 @@ function LoginContent() {
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
-                options: { captchaToken }
             });
 
             if (error) {
@@ -105,13 +104,7 @@ function LoginContent() {
                     </div>
 
                     {/* Turnstile Captcha */}
-                    <div className="flex justify-center -mb-2">
-                        <Turnstile
-                            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-                            onSuccess={(token) => setCaptchaToken(token)}
-                            options={{ theme: 'dark' }}
-                        />
-                    </div>
+
 
                     <div className="flex justify-end">
                         <Link href="/forgot-password" className="text-sm text-white/60 hover:text-white transition-colors">

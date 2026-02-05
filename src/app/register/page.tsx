@@ -38,7 +38,6 @@ export default function Register() {
                 password,
                 options: {
                     emailRedirectTo: `${window.location.origin}/login?verified=true`,
-                    captchaToken: captchaToken,
                 },
             });
 
@@ -149,23 +148,7 @@ export default function Register() {
 
                         {/* Turnstile Captcha */}
                         {/* Turnstile Captcha */}
-                        <div className="flex justify-center py-2 min-h-[70px] border border-dashed border-white/20 rounded-lg my-4 bg-white/5 relative">
-                            {/* Debug Text - Remove after fix */}
-                            <span className="absolute top-0 left-0 text-[8px] text-white/20 p-1">Widget Container</span>
 
-                            <Turnstile
-                                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-                                onSuccess={(token) => {
-                                    console.log("Turnstile Success:", token);
-                                    setCaptchaToken(token);
-                                }}
-                                onError={(err) => {
-                                    console.error("Turnstile Error:", err);
-                                    alert("Turnstile Error: Check console for details.");
-                                }}
-                                options={{ theme: 'dark' }}
-                            />
-                        </div>
 
                         <button type="submit" className="w-full bg-white text-black py-4 rounded-xl font-bold text-lg hover:bg-stone-200 hover:shadow-lg hover:-translate-y-0.5 transition-all">
                             Start Now
