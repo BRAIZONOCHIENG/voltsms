@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     canonical: BASE_URL,
   },
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    google: "q8vXT-uGNovrHonR-uvvmjV4c89xiw5kR7egROV60wk",
   },
 };
 
