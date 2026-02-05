@@ -1,53 +1,74 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { PVAPinsClient } from '@/lib/providers/PVAPinsClient';
+
+export const dynamic = 'force-dynamic';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+const PVAPINS_API_KEY = process.env.PVAPINS_API_KEY!;
+
+
+
 export async function POST(req: Request) {
     try {
         const { orderId } = await req.json();
 
-        // 1. Validate Session
+        // 1. Auth Check
         const authHeader = req.headers.get('Authorization');
         if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        // (Simplified auth check for speed, relying on client sending valid token)
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+        if (authError || !user) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-        const SMSPOOL_API_KEY = process.env.SMSPOOL_API_KEY;
-
-        // 2. Output SMSPool Check
-        // https://api.smspool.net/sms/check?key=...&orderid=...
-        const res = await fetch(`https://api.smspool.net/sms/check?key=${SMSPOOL_API_KEY}&orderid=${orderId}`);
-        const data = await res.json();
-
-        // SMSPool Response: 
-        // { status: 1, sms: '123456', ... } (Success)
-        // { status: 3, ... } (Pending)
-        // { status: 2, ... } (Expired/Cancelled?) 
-
-        // We will return a standardized status
-        const response = {
-            status: 'pending',
-            code: null as string | null,
-            timeLeft: data.time_left || 0
-        };
-
-        if (data.status === 1) {
-            response.status = 'completed';
-            response.code = data.sms;
-
-            // Update DB - Mark as completed
-            await supabaseAdmin.from('orders').update({ status: 'completed', code: data.sms }).eq('order_id', orderId);
-        } else if (data.status === 2 || data.status === '2') { // Expired
-            response.status = 'expired';
-            // Frontend will Trigger Cancel/Refund flow if expired
+        if (!PVAPINS_API_KEY) {
+            console.error("PVAPins Config Missing");
+            return NextResponse.json({ error: 'Server Config Error' }, { status: 500 });
         }
 
-        return NextResponse.json(response);
+        // 2. Client
+        const client = new PVAPinsClient(PVAPINS_API_KEY);
 
-    } catch (error: any) {
-        console.error("Check Error:", error);
-        return NextResponse.json({ error: 'Check failed' }, { status: 500 });
+
+        // 3. Check SMS Status
+        let smsCode: string | null = null;
+        try {
+            smsCode = await client.getSMS(orderId);
+        } catch (e: any) {
+            console.error("PVAPins Check Error:", e);
+            // Keep pending if API errors (don't fail user yet)
+            return NextResponse.json({ status: 'pending' });
+        }
+
+        if (smsCode) {
+            // Success!
+            // 4. Update Database
+            const { error: updateError } = await supabaseAdmin
+                .from('orders')
+                .update({
+                    status: 'completed',
+                    sms_code: smsCode,
+                    full_sms: `Your code is ${smsCode}` // PVAPins usually just returns code or short text
+                })
+                .eq('order_id', orderId)
+                .eq('user_id', user.id);
+
+            if (updateError) console.error("Failed to update completed order:", updateError);
+
+            return NextResponse.json({
+                status: 'completed',
+                code: smsCode,
+                full_sms: `Your code is ${smsCode}`
+            });
+        }
+
+        // No code yet
+        return NextResponse.json({ status: 'pending' });
+
+    } catch (error) {
+        console.error('Check SMS Error:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

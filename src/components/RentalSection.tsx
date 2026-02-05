@@ -5,6 +5,7 @@ import { FaMobileAlt, FaClock, FaHistory, FaBolt, FaInfinity, FaCheckCircle, FaE
 import { motion, AnimatePresence } from 'framer-motion';
 import { MOCK_SERVICES, Service } from '../app/dashboard/services';
 import { COUNTRIES, Country } from '../app/dashboard/countries';
+import { FixedSizeList as List } from 'react-window';
 import clsx from 'clsx';
 // Import ServiceRow helper or re-define simplified version for this dropdown
 // Re-defining simplified version to avoid circular dependency or complex prop drilling if ServiceRow is complex
@@ -25,10 +26,13 @@ interface Rental {
 const UNLIMITED_SERVICE = { id: 'unlimited', name: 'Unlimited Services', price: 10.00, category: 'Premium' };
 const ALL_SERVICES = [UNLIMITED_SERVICE, ...Array.from(new Map(MOCK_SERVICES.filter(s => s.id !== 'custom').map(s => [s.id, s])).values())];
 
+
 export default function RentalSection({ userToken }: { userToken: string | null }) {
     const [subTab, setSubTab] = useState<'active' | 'history' | 'billing'>('active');
     const [rentals, setRentals] = useState<Rental[]>([]);
     const [loading, setLoading] = useState(false);
+
+    // Purchase State
 
     // Purchase State
     const [selectedDuration, setSelectedDuration] = useState(30);
@@ -178,8 +182,15 @@ export default function RentalSection({ userToken }: { userToken: string | null 
             monthlyRef = 0;
         } else if (selectedService.id === 'unlimited') {
             monthlyRef = 9.50; // Unlimited Base
-        } else if (POPULAR_SERVICES.includes(selectedService.id)) {
-            monthlyRef = 2.80; // Popular Base (Target $2.80 vs TV $3.00)
+        } else {
+            const lowerName = selectedService.name.toLowerCase();
+            // Check if name contains any of the popular keys
+            const isPopular = POPULAR_SERVICES.some(key => lowerName.includes(key));
+            if (isPopular) {
+                monthlyRef = 3.60; // Popular Base (Target ~$3.60 vs TV $4.00)
+            } else {
+                monthlyRef = 2.00; // Standard Base (Bumped from 1.60)
+            }
         }
 
         // 2. Country Scalar - Uniform Pricing (US Standard)
@@ -188,12 +199,13 @@ export default function RentalSection({ userToken }: { userToken: string | null 
 
         // 3. Duration Scalar
         // Curve adjusted to charge premium for short term while keeping long term cheap
+        // Derived from TV Curve: 1d (~12x), 3d (~5x), 7d (~2.7x), 14d (~1.8x), 30d (1x)
         let durationFactor = 1.0;
-        if (selectedDuration === 1) durationFactor = 15.0; // 1 Day premium (~$1.40 for popular)
-        else if (selectedDuration === 3) durationFactor = 5.5;  // ~$1.54 for popular (TV $1.60)
-        else if (selectedDuration === 7) durationFactor = 2.5;  // ~$1.63 for popular (TV $1.70)
-        else if (selectedDuration === 14) durationFactor = 1.5; // ~$1.96 for popular (TV $2.00)
-        else if (selectedDuration === 30) durationFactor = 1.0; // ~$2.80 for popular (TV $3.00)
+        if (selectedDuration === 1) durationFactor = 12.0;
+        else if (selectedDuration === 3) durationFactor = 5.0;
+        else if (selectedDuration === 7) durationFactor = 2.7;
+        else if (selectedDuration === 14) durationFactor = 1.8;
+        else if (selectedDuration === 30) durationFactor = 1.0;
         else if (selectedDuration === 90) durationFactor = 0.9;
         else if (selectedDuration === 365) durationFactor = 0.8;
 
@@ -285,27 +297,49 @@ export default function RentalSection({ userToken }: { userToken: string | null 
                                                 />
                                             </div>
                                         </div>
-                                        <div className="h-[250px] overflow-y-auto custom-scrollbar">
-                                            {filteredServices.map((svc, index) => (
-                                                <button
-                                                    key={svc.id}
-                                                    onClick={() => {
-                                                        setSelectedService(svc);
+                                        <div className="h-[300px]">
+                                            <List
+                                                height={300}
+                                                itemCount={filteredServices.length}
+                                                itemSize={60}
+                                                width="100%"
+                                                itemData={{
+                                                    items: filteredServices,
+                                                    onSelect: (s: Service) => {
+                                                        setSelectedService(s);
                                                         setIsServiceDropdownOpen(false);
-                                                    }}
-                                                    className={`w-full text-left px-4 py-2 flex items-center justify-between group transition-colors ${selectedService?.id === svc.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold uppercase text-white/50">
-                                                            {svc.name.substring(0, 2)}
+                                                        setServiceSearchTerm('');
+                                                    },
+                                                    selectedId: selectedService?.id
+                                                }}
+                                            >
+                                                {({ index, style, data }: any) => {
+                                                    const s = data.items[index];
+                                                    const isSelected = data.selectedId === s.id;
+                                                    if (!s) return <div style={style} />;
+
+                                                    return (
+                                                        <div style={style}>
+                                                            <button
+                                                                onClick={() => data.onSelect(s)}
+                                                                className={`w-full text-left px-4 py-2 flex items-center justify-between group transition-colors ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                                                                style={{ height: '100%' }}
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold uppercase text-white/50">
+                                                                        {s.name ? s.name.substring(0, 2) : '??'}
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-stone-300 group-hover:text-white'}`}>{s.name}</div>
+                                                                        <div className="text-[10px] text-stone-500 uppercase tracking-wider">{s.category}</div>
+                                                                    </div>
+                                                                </div>
+                                                                {s.id === 'unlimited' && <span className="text-xs bg-[var(--color-primary)] text-black px-2 py-0.5 rounded-full font-bold">PRO</span>}
+                                                            </button>
                                                         </div>
-                                                        <div>
-                                                            <div className={`font-bold text-sm ${selectedService?.id === svc.id ? 'text-white' : 'text-stone-300 group-hover:text-white'}`}>{svc.name}</div>
-                                                            <div className="text-[10px] text-stone-500 uppercase tracking-wider">{svc.category}</div>
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            ))}
+                                                    );
+                                                }}
+                                            </List>
                                         </div>
                                     </motion.div>
                                 )}

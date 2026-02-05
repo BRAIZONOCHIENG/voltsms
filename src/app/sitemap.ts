@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { MOCK_POSTS } from './blog/data';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.store';
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const currentDate = new Date().toISOString();

@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.store';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -69,6 +69,7 @@ export const metadata: Metadata = {
 
 import Footer from "../components/Footer";
 import { AnimatedBackground } from "../components/AnimatedBackground";
+import { OrganizationSchema, WebSiteSchema } from "../components/JsonLd";
 
 export default function RootLayout({
   children,
@@ -84,6 +85,8 @@ export default function RootLayout({
         <div className="relative z-10 flex flex-col flex-1">
           {children}
         </div>
+        <OrganizationSchema />
+        <WebSiteSchema />
         <div className="relative z-10">
           <Footer />
         </div>

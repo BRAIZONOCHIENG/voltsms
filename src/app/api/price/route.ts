@@ -1,4 +1,46 @@
 import { NextResponse } from 'next/server';
+import https from 'node:https';
+
+export const dynamic = 'force-dynamic';
+
+// Simple In-Memory Cache for Prices
+// Map Key: "country_serviceID" -> { price: number, timestamp: number }
+const priceCache = new Map<string, { price: number, cost: number, timestamp: number }>();
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 Minutes
+
+function fetchNative(url: string, retries = 2): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const attempt = (n: number) => {
+            const req = https.get(url, {
+                headers: { 'User-Agent': 'Mozilla/5.0' },
+                timeout: 2500 // Reduced to 2.5s for faster failover
+            }, (res) => {
+                let data = '';
+                res.on('data', (chunk) => data += chunk);
+                res.on('end', () => {
+                    if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+                        try { resolve(JSON.parse(data)); }
+                        catch (e) { reject(new Error('Failed to parse JSON')); }
+                    } else {
+                        try { resolve(JSON.parse(data)); }
+                        catch (e) { reject(new Error(`API Status: ${res.statusCode} Body: ${data}`)); }
+                    }
+                });
+            });
+
+            req.on('error', (err) => {
+                if (n < retries) setTimeout(() => attempt(n + 1), 500); // Faster retry (500ms delay)
+                else reject(err);
+            });
+            req.on('timeout', () => {
+                req.destroy();
+                if (n < retries) setTimeout(() => attempt(n + 1), 500);
+                else reject(new Error('Request timed out'));
+            });
+        };
+        attempt(1);
+    });
+}
 
 export async function POST(req: Request) {
     try {
@@ -8,17 +50,26 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Service and country are required' }, { status: 400 });
         }
 
+        // 1. Check Cache
+        const cacheKey = `${country}_${service}`;
+        const cached = priceCache.get(cacheKey);
+        if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
+            // Return cached price
+            // Re-apply markup calculation just in case strategy changed (though usually unnecessary)
+            // But we cached the RAW cost? Or final price? 
+            // Better to cache the RAW COST from provider, then apply markup logic newly.
+            // Let's assume we stored metadata.
+
+            return NextResponse.json(calculateSellingPrice(cached.cost));
+        }
+
         const SMSPOOL_API_KEY = process.env.SMSPOOL_API_KEY;
         if (!SMSPOOL_API_KEY) {
-            console.error("SMSPOOL_API_KEY is missing");
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        // 1. Fetch Price from SMSPool
-        // Using 'request/price' endpoint: https://smspool.net/api/request/price?key=...&country=...&service=...
-        // MOCK_SERVICES id usually matches SMSPool service id.
-        const smspoolRes = await fetch(`https://api.smspool.net/request/price?key=${SMSPOOL_API_KEY}&country=${country}&service=${service}`);
-        const smspoolData = await smspoolRes.json();
+        // 2. Fetch Price from SMSPool
+        const smspoolData = await fetchNative(`https://api.smspool.net/request/price?key=${SMSPOOL_API_KEY}&country=${country}&service=${service}`);
 
         if (!smspoolData.price) {
             return NextResponse.json({ error: 'Service unavailable' }, { status: 404 });
@@ -26,39 +77,36 @@ export async function POST(req: Request) {
 
         const costPrice = parseFloat(smspoolData.price);
 
-        // 2. Apply Smart Pricing Strategy
-        // Goal: High margins on cheap numbers, competitive margins on mid-range, capped profit on expensive numbers.
-
-        let sellingPrice = 0;
-
-        if (costPrice < 0.50) {
-            // Tier 1: Cheap Services (< $0.50)
-            // Strategy: Fixed markup of +$0.40 to ensure minimum profit.
-            // Example: $0.10 -> $0.50 (+fee) = $0.55
-            sellingPrice = costPrice + 0.40;
-        } else {
-            // Tier 2: All Other Services (>= $0.50)
-            // Strategy: Flat Profit of +$0.50.
-            // This keeps prices low and competitive (closer to $2 range) while guaranteeing $0.50 profit.
-            // Example $1.50 -> $2.00 (+fee) = $2.05
-            sellingPrice = costPrice + 0.50;
-        }
-
-        // Add small fixed fee for fluctuations
-        sellingPrice += 0.05;
-
-        // Round to 2 decimal places
-        sellingPrice = Math.round(sellingPrice * 100) / 100;
-
-        return NextResponse.json({
-            price: sellingPrice,
-            cost: costPrice, // Optional: useful for debugging/admin
-            service: service,
-            country: country
+        // 3. Update Cache
+        priceCache.set(cacheKey, {
+            price: costPrice, // Redundant naming but keeping structure clear
+            cost: costPrice,
+            timestamp: Date.now()
         });
 
+        // 4. Return Calculated Price
+        return NextResponse.json(calculateSellingPrice(costPrice));
+
     } catch (error: any) {
-        console.error('Price fetch error:', error);
-        return NextResponse.json({ error: error.message || 'Failed to fetch price' }, { status: 500 });
+        console.error('Price Fetch Error:', error);
+        return NextResponse.json({ error: 'Failed to fetch price' }, { status: 500 });
     }
+}
+
+function calculateSellingPrice(costPrice: number) {
+    // Tier 1: Cheap (< $0.50) -> +$0.40
+    // Tier 2: Expensive (>= $0.50) -> +$0.50
+    // + $0.05 buffer
+    let sellingPrice = 0;
+    if (costPrice < 0.50) {
+        sellingPrice = costPrice + 0.40;
+    } else {
+        sellingPrice = costPrice + 0.50;
+    }
+    sellingPrice += 0.05;
+
+    return {
+        price: parseFloat(sellingPrice.toFixed(2)),
+        cost: costPrice
+    };
 }

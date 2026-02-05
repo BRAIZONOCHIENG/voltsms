@@ -1,258 +1,214 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { FaWallet, FaBitcoin, FaPaypal, FaMobileAlt } from 'react-icons/fa';
-import { motion } from 'framer-motion';
-import dynamic from 'next/dynamic';
+import { FaBitcoin, FaCopy, FaSpinner, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { supabase } from '../lib/supabaseClient';
 
-const PaystackTrigger = dynamic(() => import('./PaystackTrigger'), { ssr: false });
-const PayPalTrigger = dynamic(() => import('./PayPalTrigger'), { ssr: false });
-
 interface DepositSectionProps {
-    userEmail: string | null;
-    onDepositSuccess: () => void;
+    userToken?: string | null;
+    onDepositSuccess?: () => void;
 }
 
-// User-provided static addresses
-// Note: LTC is missing from user input, temporarily omitting or using BTC placeholder? 
-// User asked to "maintain" coins. I'll add LTC but maybe I need the address.
-// I will map USDT to BSC as it is common and user provided BSC address.
-const WALLETS = {
-    'BTC': { address: 'bc1qnh7ve8xzsjsdpws2x467h0uu7htwq3rghn4uwt', network: 'Bitcoin', name: 'Bitcoin', icon: 'bitcoin' },
-    'ETH': { address: '0x83C67a263773CB8dA9834d4965E9e5F1d4c9a5B1', network: 'Ethereum (ERC20)', name: 'Ethereum', icon: 'ethereum' },
-    'BNB': { address: '0x83C67a263773CB8dA9834d4965E9e5F1d4c9a5B1', network: 'BSC (BEP20)', name: 'Binance Coin', icon: 'binance' },
-    'USDT': { address: '0x83C67a263773CB8dA9834d4965E9e5F1d4c9a5B1', network: 'BSC (BEP20)', name: 'Tether', icon: 'tether' }, // USDT on BSC
-    'MATIC': { address: '0x83C67a263773CB8dA9834d4965E9e5F1d4c9a5B1', network: 'Polygon', name: 'Polygon', icon: 'polygon' },
-    'SOL': { address: '3BFdLqQqYjNKk6KsK6zyBn48miTRZPLEWPjYLAP9huoT', network: 'Solana', name: 'Solana', icon: 'solana' },
-    // 'LTC': { address: 'MISSING', network: 'Litecoin', name: 'Litecoin', icon: 'litecoin' }
+interface PaymentDetails {
+    address: string;
+    currency: string;
+    network: string;
+    trackId: string;
+    amount: number;
+    memo?: string;
+}
+
+// All supported coins with their networks
+const CRYPTO_COINS: { symbol: string; name: string; networks: { id: string; name: string }[] }[] = [
+    { symbol: 'BTC', name: 'Bitcoin', networks: [{ id: 'BTC', name: 'Bitcoin' }] },
+    { symbol: 'ETH', name: 'Ethereum', networks: [{ id: 'ETH', name: 'Ethereum (ERC20)' }] },
+    {
+        symbol: 'USDT', name: 'Tether', networks: [
+            { id: 'BSC', name: 'BSC (BEP20) - Low Fees' },
+            { id: 'ERC20', name: 'Ethereum (ERC20)' },
+            { id: 'TRC20', name: 'Tron (TRC20)' }
+        ]
+    },
+    {
+        symbol: 'USDC', name: 'USD Coin', networks: [
+            { id: 'BSC', name: 'BSC (BEP20) - Low Fees' },
+            { id: 'ERC20', name: 'Ethereum (ERC20)' }
+        ]
+    },
+    { symbol: 'LTC', name: 'Litecoin', networks: [{ id: 'LTC', name: 'Litecoin' }] },
+    { symbol: 'SOL', name: 'Solana', networks: [{ id: 'SOL', name: 'Solana' }] },
+    { symbol: 'BNB', name: 'BNB', networks: [{ id: 'BSC', name: 'BSC (BEP20)' }] },
+    { symbol: 'TRX', name: 'Tron', networks: [{ id: 'TRX', name: 'Tron (TRC20)' }] },
+    { symbol: 'DOGE', name: 'Dogecoin', networks: [{ id: 'DOGE', name: 'Dogecoin' }] },
+    { symbol: 'MATIC', name: 'Polygon', networks: [{ id: 'POLYGON', name: 'Polygon' }] },
+    { symbol: 'POL', name: 'POL (Polygon)', networks: [{ id: 'POLYGON', name: 'Polygon' }] },
+    {
+        symbol: 'SHIB', name: 'Shiba Inu', networks: [
+            { id: 'BEP20', name: 'BSC (BEP20) - Low Fees' },
+            { id: 'ERC20', name: 'Ethereum (ERC20)' },
+        ]
+    },
+    { symbol: 'AVAX', name: 'Avalanche', networks: [{ id: 'AVAX', name: 'Avalanche C-Chain' }] },
+    { symbol: 'LINK', name: 'Chainlink', networks: [{ id: 'ERC20', name: 'Ethereum (ERC20)' }] },
+    {
+        symbol: 'DAI', name: 'Dai', networks: [
+            { id: 'ERC20', name: 'Ethereum (ERC20)' },
+            { id: 'BEP20', name: 'BSC (BEP20) - Low Fees' },
+        ]
+    },
+    { symbol: 'BCH', name: 'Bitcoin Cash', networks: [{ id: 'BCH', name: 'Bitcoin Cash' }] },
+    { symbol: 'XMR', name: 'Monero', networks: [{ id: 'XMR', name: 'Monero' }] },
+    { symbol: 'XRP', name: 'Ripple', networks: [{ id: 'XRP', name: 'Ripple' }] },
+    { symbol: 'ADA', name: 'Cardano', networks: [{ id: 'ADA', name: 'Cardano' }] },
+    { symbol: 'NANO', name: 'Nano', networks: [{ id: 'NANO', name: 'Nano' }] },
+    { symbol: 'BUSD', name: 'Binance USD', networks: [{ id: 'BEP20', name: 'BSC (BEP20)' }] },
+    { symbol: 'USDP', name: 'Pax Dollar', networks: [{ id: 'ERC20', name: 'Ethereum' }] },
+    { symbol: 'TUSD', name: 'TrueUSD', networks: [{ id: 'ERC20', name: 'Ethereum' }, { id: 'TRC20', name: 'Tron' }] },
+    { symbol: 'ETC', name: 'Ethereum Classic', networks: [{ id: 'ETC', name: 'Ethereum Classic' }] },
+    { symbol: 'XLM', name: 'Stellar', networks: [{ id: 'XLM', name: 'Stellar' }] },
+];
+
+// Coin logo URLs - using multiple CDN sources for reliability
+const getCoinLogo = (symbol: string) => {
+    const s = symbol.toLowerCase();
+    return `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/32/color/${s}.png`;
 };
 
-export default function DepositSection({ userEmail, onDepositSuccess }: DepositSectionProps) {
-    const [depositAmount, setDepositAmount] = useState('1');
-    const [paymentMethod, setPaymentMethod] = useState<'crypto' | 'paypal' | 'card' | 'mpesa'>('crypto');
+export default function DepositSection({ userToken, onDepositSuccess }: DepositSectionProps) {
+    const [depositAmount, setDepositAmount] = useState('10');
+    const [selectedCoin] = useState('USDT'); // Default to USDT for API compatibility
     const [loading, setLoading] = useState(false);
 
-
-
-    // Crypto State
-    const [selectedCoin, setSelectedCoin] = useState<keyof typeof WALLETS | ''>('');
-
     const getAccessToken = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
+        if (userToken) return userToken;
+        const { data: { session }, error } = await supabase.auth.refreshSession();
+        if (error) {
+            const currentSession = await supabase.auth.getSession();
+            return currentSession.data.session?.access_token || null;
+        }
         return session?.access_token || null;
     };
 
-    const handleVerifyParams = async (type: string, data: Record<string, unknown>) => {
-        setLoading(true);
-        const token = await getAccessToken();
-        if (!token) return;
+    const handleCreatePayment = async () => {
+        if (!selectedCoin) return;
 
+        const amount = parseFloat(depositAmount);
+        if (isNaN(amount) || amount < 5) {
+            alert('Minimum deposit is $5');
+            return;
+        }
+
+        setLoading(true);
         try {
-            // Note: reusing /deposit endpoint or we need a verify one. 
-            // For now let's assume /deposit can handle verification or we create one.
-            // Actually, let's call a new endpoint /deposit/verify in backend
-            const res = await fetch('/api/payment/verify', {
+            const token = await getAccessToken();
+            if (!token) {
+                alert('Please login first');
+                setLoading(false);
+                return;
+            }
+
+            const res = await fetch('/api/crypto/create-payment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ type, ...data })
+                body: JSON.stringify({
+                    amount: amount,
+                    currency: selectedCoin
+                    // Network is selected on OxaPay page if applicable, or we send valid defaults if needed.
+                    // But Merchant Link usually handles it.
+                })
             });
-            const result = await res.json();
-            if (result.success) {
-                alert(`Success! Deposit credited ($${result.newBalance})`);
-                onDepositSuccess();
-                setDepositAmount('');
+
+            const data = await res.json();
+            console.log('Payment response status:', res.status);
+            console.log('Payment response body:', data);
+
+            if (data.success && data.payLink) {
+                // Redirect to OxaPay
+                window.location.href = data.payLink;
             } else {
-                alert(`Verification failed: ${result.detail}`);
+                alert(`Payment Error: ${data.error || data.message || 'Unknown error'}`);
+                setLoading(false);
             }
-        } catch (e) {
-            console.error(e);
-            alert("Verification error");
-        } finally {
+        } catch (error) {
+            console.error('Payment creation error:', error);
+            alert('Failed to create payment. Please try again.');
             setLoading(false);
         }
     };
 
-    const handleDeposit = async () => {
-        alert("For crypto payments, please send funds to the displayed address. Contact support for confirmation.");
-    };
-
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Payment Method Toggle */}
-            <div className="grid grid-cols-2 gap-3 p-1 bg-white/5 backdrop-blur-md rounded-xl border border-white/10">
-                <button
-                    onClick={() => setPaymentMethod('crypto')}
-                    className={clsx(
-                        "h-14 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-3 relative overflow-hidden group border",
-                        paymentMethod === 'crypto'
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 border-transparent text-white shadow-lg"
-                            : "bg-transparent border-transparent text-stone-400 hover:bg-white/5 hover:text-white"
-                    )}
-                >
-                    <FaBitcoin className="text-xl opacity-80 group-hover:opacity-100 transition-opacity" />
-                    <span>Crypto</span>
-                </button>
-                <button
-                    onClick={() => setPaymentMethod('paypal')}
-                    className={clsx(
-                        "h-14 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-3 relative overflow-hidden group border",
-                        paymentMethod === 'paypal'
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 border-transparent text-white shadow-lg"
-                            : "bg-transparent border-transparent text-stone-400 hover:bg-white/5 hover:text-white"
-                    )}
-                >
-                    <FaPaypal className="text-xl opacity-80 group-hover:opacity-100 transition-opacity" />
-                    <span>PayPal</span>
-                </button>
-                <button
-                    onClick={() => setPaymentMethod('card')}
-                    className={clsx(
-                        "h-14 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-3 relative overflow-hidden group border",
-                        paymentMethod === 'card'
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 border-transparent text-white shadow-lg"
-                            : "bg-transparent border-transparent text-stone-400 hover:bg-white/5 hover:text-white"
-                    )}
-                >
-                    <FaWallet className="text-xl opacity-80 group-hover:opacity-100 transition-opacity" />
-                    <span>Card</span>
-                </button>
-                <button
-                    onClick={() => setPaymentMethod('mpesa')}
-                    className={clsx(
-                        "h-14 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-3 relative overflow-hidden group border",
-                        paymentMethod === 'mpesa'
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 border-transparent text-white shadow-lg"
-                            : "bg-transparent border-transparent text-stone-400 hover:bg-white/5 hover:text-white"
-                    )}
-                >
-                    <FaMobileAlt className="text-xl opacity-80 group-hover:opacity-100 transition-opacity" />
-                    <span>M-Pesa</span>
-                </button>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center">
+                    <FaBitcoin className="text-white text-lg" />
+                </div>
+                <div>
+                    <h3 className="text-white font-bold text-lg">Crypto Deposit</h3>
+                    <p className="text-stone-500 text-xs">Redirects to Secure Checkout</p>
+                </div>
             </div>
 
-            {paymentMethod === 'crypto' ? (
-                <div className="space-y-4 pt-2">
-                    <label className="text-xs font-semibold uppercase text-stone-400 tracking-wider ml-1">Select Coin</label>
-                    <div className="grid grid-cols-3 gap-3">
-                        {/* 
-                            Original Request: BTC, ETH, LTC, USDT, DOGE, SOL 
-                            New Request: Replace DOGE with BNB.
-                            Since I don't have LTC address, I'm omitting it to avoid issues.
-                            USDT mapped to BSC.
-                        */}
-                        {['BTC', 'ETH', 'USDT', 'BNB', 'SOL', 'MATIC'].map(coin => (
-                            <button
-                                key={coin}
-                                onClick={() => setSelectedCoin(coin as keyof typeof WALLETS)}
-                                className={`border rounded-xl py-3 flex flex-col items-center justify-center gap-2 transition-all ${selectedCoin === coin
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-transparent text-white shadow-lg shadow-purple-500/20'
-                                    : 'bg-white/5 border-white/5 text-stone-400 hover:bg-white/10 hover:text-white'
-                                    }`}
-                            >
-                                <img
-                                    src={`https://cdn.simpleicons.org/${WALLETS[coin as keyof typeof WALLETS].icon}/white`}
-                                    alt={coin}
-                                    className="w-6 h-6 object-contain"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                                <span className="font-bold text-xs">{coin}</span>
-                            </button>
-                        ))}
-                    </div>
-
-                    {selectedCoin && WALLETS[selectedCoin] && (
-                        <div className="bg-black/40 border border-white/10 rounded-xl p-4 mt-4 animate-in fade-in slide-in-from-bottom-2">
-                            <div className="flex flex-col items-center text-center gap-4">
-                                <div className="bg-white p-2 rounded-lg">
-                                    <QRCodeSVG
-                                        value={WALLETS[selectedCoin].address}
-                                        size={128}
-                                        fgColor="#000000"
-                                        bgColor="#ffffff"
-                                        level="M"
-                                    />
-                                </div>
-                                <div className="w-full">
-                                    <label className="text-xs text-stone-500 uppercase font-semibold mb-1 block">Send {WALLETS[selectedCoin].name} to:</label>
-                                    <div
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(WALLETS[selectedCoin].address);
-                                            alert("Address Copied!");
-                                        }}
-                                        className="bg-[#111] border border-white/20 rounded-lg p-3 font-mono text-sm break-all text-white cursor-pointer hover:bg-white/10 transition-colors flex items-center justify-between group"
-                                    >
-                                        {WALLETS[selectedCoin].address}
-                                        <span className="text-xs bg-white/10 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">COPY</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 justify-center mt-3 text-xs text-stone-400">
-                                        <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                                        Only send <span className="text-white font-bold">{WALLETS[selectedCoin].network}</span> network funds.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+            {/* Amount */}
+            <div>
+                <label className="text-xs font-medium text-stone-400 mb-2 block">Amount (USD)</label>
+                <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500 font-bold text-lg">$</span>
+                    <input
+                        type="number"
+                        value={depositAmount}
+                        onChange={(e) => setDepositAmount(e.target.value)}
+                        className="w-full bg-stone-900/50 border border-stone-700/50 rounded-xl pl-10 pr-4 py-4 text-white text-xl font-bold focus:outline-none focus:border-purple-500 transition-all"
+                        placeholder="10"
+                        min="5"
+                        max="1000"
+                    />
                 </div>
-            ) : (
-                <>
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-stone-400 tracking-wider ml-1">Deposit Amount (USD)</label>
-                        <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-bold">$</span>
-                            <input
-                                type="number"
-                                value={depositAmount}
-                                onChange={(e) => setDepositAmount(e.target.value)}
-                                className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-xl pl-8 pr-4 py-4 text-white text-lg font-bold focus:outline-none focus:border-[var(--color-secondary)] transition-colors"
-                                placeholder="0.00"
-                                step="0.01"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 gap-2 mt-2">
-                            {['1', '5', '10', '25'].map(amt => (
-                                <button
-                                    key={amt}
-                                    onClick={() => setDepositAmount(amt)}
-                                    className={`py-2 rounded-lg text-sm font-medium border transition-all ${depositAmount === amt
-                                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-transparent text-white shadow-lg'
-                                        : 'bg-white/5 border-white/5 text-stone-400 hover:bg-white/10'
-                                        }`}
-                                >
-                                    ${amt}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                <div className="grid grid-cols-4 gap-2 mt-3">
+                    {['5', '10', '25', '50', '100', '200', '500', '1000'].map(amt => (
+                        <button
+                            key={amt}
+                            onClick={() => setDepositAmount(amt)}
+                            className={clsx(
+                                "py-2.5 rounded-lg text-sm font-bold transition-all",
+                                depositAmount === amt
+                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
+                                    : 'bg-stone-800/50 text-stone-400 hover:bg-stone-700/50 hover:text-white'
+                            )}
+                        >
+                            ${amt}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
-                    <div className="mt-8">
-                        {paymentMethod === 'paypal' ? (
-                            <PayPalTrigger
-                                amount={parseFloat(depositAmount) || 0}
-                                getAccessToken={getAccessToken}
-                                onSuccess={(orderID) => handleVerifyParams('paypal', { orderID })}
-                                onError={(err) => {
-                                    console.error("PayPal Button Error:", err);
-                                    alert("PayPal failed to load or process. Check console.");
-                                }}
-                            />
-                        ) : (paymentMethod === 'card' || paymentMethod === 'mpesa') ? (
-                            <PaystackTrigger
-                                email={userEmail || ''}
-                                amountUSD={parseFloat(depositAmount) || 0}
-                                method={paymentMethod}
-                                onSuccess={(ref: { reference: string }) => handleVerifyParams('paystack', { reference: ref.reference, amount: parseFloat(depositAmount) })}
-                            />
-                        ) : null}
-                    </div>
-                </>
-            )}
+            {/* Button */}
+            <button
+                onClick={handleCreatePayment}
+                disabled={loading}
+                className={clsx(
+                    "w-full py-4 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2",
+                    !loading
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90"
+                        : "bg-stone-800 text-stone-500 cursor-not-allowed"
+                )}
+            >
+                {loading ? <><FaSpinner className="animate-spin" /> Redirecting...</> : `Pay Now`}
+            </button>
+
+            <div className="flex flex-col items-center justify-center gap-2 mt-4 opacity-60 hover:opacity-100 transition-opacity">
+                <p className="text-center text-xs text-stone-500">
+                    You will choose your preferred cryptocurrency on the next step.
+                </p>
+                <p className="text-[10px] text-stone-500 uppercase tracking-widest font-medium">
+                    Powered by <span className="font-bold text-stone-400">OxaPay</span>
+                </p>
+            </div>
         </div>
     );
 }

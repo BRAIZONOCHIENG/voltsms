@@ -28,7 +28,7 @@ interface BreadcrumbSchemaProps {
     items: BreadcrumbItem[];
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.store';
 
 export function OrganizationSchema({
     name = "VoltSMS",

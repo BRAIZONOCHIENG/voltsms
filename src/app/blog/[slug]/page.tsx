@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 import { BlogPostSchema, BreadcrumbSchema } from '../../../components/JsonLd';
 import { notFound } from 'next/navigation';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.vercel.app';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.store';
 
 interface BlogPostPageProps {
     params: Promise<{ slug: string }>;

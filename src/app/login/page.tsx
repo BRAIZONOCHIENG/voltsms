@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { supabase } from '../../lib/supabaseClient';
 
 function LoginContent() {
@@ -12,6 +13,7 @@ function LoginContent() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [captchaToken, setCaptchaToken] = useState<string | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
     const verified = searchParams.get('verified');
@@ -21,10 +23,17 @@ function LoginContent() {
         setLoading(true);
         setError('');
 
+        if (!captchaToken) {
+            setError('Please complete the captcha verification.');
+            setLoading(false);
+            return;
+        }
+
         try {
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
+                options: { captchaToken }
             });
 
             if (error) {
@@ -94,6 +103,16 @@ function LoginContent() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Turnstile Captcha */}
+                    <div className="flex justify-center -mb-2">
+                        <Turnstile
+                            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                            onSuccess={(token) => setCaptchaToken(token)}
+                            options={{ theme: 'dark' }}
+                        />
+                    </div>
+
                     <div className="flex justify-end">
                         <Link href="/forgot-password" className="text-sm text-white/60 hover:text-white transition-colors">
                             Forgot Password?

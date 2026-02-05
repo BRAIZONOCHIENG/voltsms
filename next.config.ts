@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import dns from "node:dns";
+
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 const nextConfig: NextConfig = {
   devIndicators: false,

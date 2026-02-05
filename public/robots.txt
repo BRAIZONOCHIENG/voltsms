@@ -14,4 +14,4 @@ Disallow: /forgot-password
 Disallow: /reset-password
 
 # Sitemap
-Sitemap: https://voltsms.com/sitemap.xml
+Sitemap: https://voltsms.store/sitemap.xml

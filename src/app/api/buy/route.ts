@@ -1,36 +1,35 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { PVAPinsClient } from '@/lib/providers/PVAPinsClient';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+// PVAPins Config
+const PVAPINS_API_KEY = process.env.PVAPINS_API_KEY!;
+
+
+
 export async function POST(req: Request) {
     try {
         const reqBody = await req.json();
         const { service, country, price, serviceName } = reqBody;
-        const verificationMethod = reqBody.verificationMethod; // 'sms' or 'voice'
 
-        // 0. Check Maintenance Mode
-        const { readJson } = await import('@/lib/json-db');
-        const settings = await readJson('settings.json', { maintenance_mode: false });
-        if (settings.maintenance_mode) {
-            return NextResponse.json({
-                error: 'Service Temporarily Unavailable due to maintenance. Please try again later.'
-            }, { status: 503 });
+        if (!PVAPINS_API_KEY) {
+
+            console.error("PVAPins Config Missing");
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
         // 1. Validate User Session
         const authHeader = req.headers.get('Authorization');
-        if (!authHeader) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
         const token = authHeader.replace('Bearer ', '');
         const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
-        if (authError || !user) {
-            return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-        }
+        if (authError || !user) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
         // 2. Check User Balance
         const { data: profile, error: profileError } = await supabaseAdmin
@@ -39,100 +38,70 @@ export async function POST(req: Request) {
             .eq('user_id', user.id)
             .single();
 
-        let currentBalance = 0;
-
-        if (profileError || !profile) {
-            // Self-healing: create user if missing
-            console.log("User row missing, creating default for:", user.id);
-            const { error: insertErr } = await supabaseAdmin
-                .from('users')
-                .insert({ user_id: user.id, balance: 0 });
-
-            if (insertErr) {
-                console.error("Failed to auto-create user:", insertErr);
-                return NextResponse.json({ error: 'User profile not found and creation failed' }, { status: 500 });
-            }
-            currentBalance = 0;
-        } else {
-            currentBalance = profile.balance;
-        }
+        let currentBalance = profile?.balance || 0;
 
         if (currentBalance < price) {
             return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
         }
 
-        // 3. Prepare SMSPool Request
-        const SMSPOOL_API_KEY = process.env.SMSPOOL_API_KEY;
-        if (!SMSPOOL_API_KEY) {
-            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        // 3. Purchase from PVAPins
+        const pvaClient = new PVAPinsClient(PVAPINS_API_KEY);
+
+        let order;
+
+        try {
+            order = await pvaClient.purchaseNumber(service, country);
+        } catch (e: any) {
+            console.error("PVAPins Purchase Error:", e);
+            return NextResponse.json({
+                error: 'Stock currently unavailable for this service. Please try a different country or service.'
+            }, { status: 503 });
         }
 
-        let purchaseUrl = `https://api.smspool.net/purchase/sms?key=${SMSPOOL_API_KEY}&country=${country}&service=${service}`;
-
-        // Handle Voice Verification
-        if (verificationMethod === 'voice') {
-            // "Mike" pool is often used for Voice/Flash in SMSPool context
-            // If this pool is incorrect, the API will fail and we return that error.
-            purchaseUrl += `&pool=Mike`;
-
-            // Security: Ensure price is correct for voice
-            if (price < 2.20) {
-                return NextResponse.json({ error: 'Invalid price for voiced verification' }, { status: 400 });
-            }
-        }
-
-        // 4. Execute Purchase
-        const purchaseRes = await fetch(purchaseUrl);
-        const purchaseData = await purchaseRes.json();
-
-        if (purchaseData.success === 0) {
-            return NextResponse.json({ error: purchaseData.message || 'Failed to purchase number from provider' }, { status: 503 });
-        }
-
-        // Success! We have a number.
-        const phoneNumber = purchaseData.phonenumber;
-        const orderId = purchaseData.order_id;
-        const region = purchaseData.cc;
-
-        // 5. Deduct User Balance
+        // 4. Deduct User Balance (Use the PRICE passed from frontend/strategy, NOT the cost)
         const newBalance = currentBalance - price;
+
         const { error: updateError } = await supabaseAdmin
             .from('users')
             .update({ balance: newBalance })
             .eq('user_id', user.id);
 
-        if (updateError) {
-            console.error("CRITICAL: Failed to deduct balance after successful purchase", updateError);
-        }
-
-        // 6. Store Order in Database
-        const { error: insertError } = await supabaseAdmin
-            .from('orders')
-            .insert({
+        // 5. Store Order (Safe)
+        try {
+            const { error: insertError } = await supabaseAdmin.from('orders').insert({
                 user_id: user.id,
-                order_id: orderId, // SMSPool Order ID
-                service: serviceName, // e.g. "Google"
-                phone: phoneNumber,
-                cost: price, // The price the user paid
-                provider_cost: purchaseData.cost || 0, // The actual cost from SMSPool
-                status: 'pending', // Waiting for SMS
-                country: region
+                order_id: order.orderId,
+                service: serviceName,
+                phone: order.phoneNumber,
+                cost: price, // Revenue
+                provider_cost: order.cost, // Expense
+                status: 'pending',
+                provider: 'pvapins'
             });
 
-        if (insertError) {
-            console.error("Failed to store order:", insertError);
+            if (insertError) throw insertError;
+
+        } catch (dbError) {
+            console.error('Order storage failed, rolling back balance...', dbError);
+            // ROLLBACK BALANCE
+            await supabaseAdmin
+                .from('users')
+                .update({ balance: currentBalance }) // Restore original
+                .eq('user_id', user.id);
+
+            return NextResponse.json({ error: 'Transaction failed. Please try again. Balance refunded.' }, { status: 500 });
         }
 
         return NextResponse.json({
             success: true,
-            phone: phoneNumber,
-            order_id: orderId,
-            new_balance: newBalance
+            phone: order.phoneNumber,
+            order_id: order.orderId,
+            new_balance: newBalance,
+            expires_at: new Date(Date.now() + 15 * 60000).toISOString() // 15 mins default
         });
 
-    } catch (error: unknown) {
+    } catch (error: any) {
         console.error('Purchase error:', error);
-        const message = error instanceof Error ? error.message : 'Internal Server Error';
-        return NextResponse.json({ error: message }, { status: 500 });
+        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }

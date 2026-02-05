@@ -34,6 +34,7 @@ export default function AdminDashboard() {
     // System Health
     const [latency, setLatency] = useState(0);
     const [successRate, setSuccessRate] = useState(0);
+    const [pvapinsBalance, setPvapinsBalance] = useState("0.00");
 
     // Fetch real stats
     useEffect(() => {
@@ -42,14 +43,21 @@ export default function AdminDashboard() {
                 const res = await fetch('/api/admin/stats');
                 const data = await res.json();
                 if (data.success) {
-                    setRevenue(data.revenue); // Note: API might return lifetime or monthly. 
+                    setRevenue(data.revenue);
                     setActiveUsers(data.activeUsers);
                     setRevenueTrend((data.revenueTrend > 0 ? "+" : "") + data.revenueTrend + "%");
                     setUserTrend((data.userTrend > 0 ? "+" : "") + data.userTrend + "%");
-
                     setLatency(data.latency);
                     setSuccessRate(data.successRate);
                 }
+
+                // Fetch PVAPins Balance
+                const pvaRes = await fetch('/api/admin/balance');
+                const pvaData = await pvaRes.json();
+                if (pvaData.balance !== undefined) {
+                    setPvapinsBalance(pvaData.balance.toFixed(2));
+                }
+
             } catch (e) {
                 console.error("Failed to fetch admin stats", e);
             }
@@ -86,7 +94,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard title="Total Revenue" value={`$${revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={<FaDollarSign />} trend={revenueTrend} />
                 <StatCard title="Active Users" value={activeUsers.toLocaleString()} icon={<FaUser />} trend={userTrend} />
-                <StatCard title="Blog Posts" value={blogCount.toString()} icon={<FaFileAlt />} />
+                <StatCard title="PVAPins Balance" value={`$${pvapinsBalance}`} icon={<div className="font-bold text-xs">PVA</div>} />
                 <StatCard title="Active Services" value={activeServicesCount.toString()} icon={<FaServer />} />
             </div>
 

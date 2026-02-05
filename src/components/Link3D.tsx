@@ -14,12 +14,12 @@ export const Link3D = ({ href, children, className }: Link3DProps) => {
             <motion.span
                 className="inline-block"
                 whileHover={{
-                    y: -2,
-                    scale: 1.1,
+                    y: -1,
+                    scale: 1.05,
                     textShadow: "0px 0px 8px rgb(255,255,255)"
                 }}
-                whileTap={{ scale: 0.9, y: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                whileTap={{ scale: 0.98, y: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
             >
                 {children}
             </motion.span>

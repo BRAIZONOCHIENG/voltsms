@@ -34,7 +34,7 @@ export default function Support() {
                     <p className="text-white/70 mb-8 max-w-2xl mx-auto">
                         Need help? Our team is available 24/7 to assist you with verifications, payments, and API integration.
                     </p>
-                    <a href="mailto:support@voltsms.vercel.app" className="bg-primary-dark text-white border border-white/20 px-6 py-3 rounded-xl font-bold hover:bg-stone-900 transition-colors">
+                    <a href="mailto:support@voltsms.store" className="bg-primary-dark text-white border border-white/20 px-6 py-3 rounded-xl font-bold hover:bg-stone-900 transition-colors">
                         Contact Support
                     </a>
                 </div>

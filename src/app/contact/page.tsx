@@ -115,8 +115,8 @@ export default function Contact() {
                                 <p className="text-white/60 mb-6 text-sm">
                                     For general questions about our services, partnership opportunities, or media inquiries, please email us. We aim to respond within 24 hours.
                                 </p>
-                                <a href="mailto:info@voltsms.vercel.app" className="text-[var(--color-primary)] font-bold hover:text-white transition-colors">
-                                    info@voltsms.vercel.app
+                                <a href="mailto:support@voltsms.store" className="text-[var(--color-primary)] font-bold hover:text-white transition-colors">
+                                    support@voltsms.store
                                 </a>
                             </div>
                         </div>

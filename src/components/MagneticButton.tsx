@@ -11,7 +11,7 @@ export const MagneticButton = ({ children, className, onClick }: any) => {
         const { height, width, left, top } = ref.current!.getBoundingClientRect();
         const middleX = clientX - (left + width / 2);
         const middleY = clientY - (top + height / 2);
-        setPosition({ x: middleX, y: middleY });
+        setPosition({ x: middleX / 3, y: middleY / 3 }); // Reduced strength
     };
 
     const reset = () => {
@@ -23,12 +23,12 @@ export const MagneticButton = ({ children, className, onClick }: any) => {
         <motion.button
             ref={ref}
             animate={{ x, y }}
-            transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
+            transition={{ type: "spring", stiffness: 100, damping: 20, mass: 0.5 }}
             onMouseMove={handleMouse}
             onMouseLeave={reset}
             onClick={onClick}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             className={className}
         >
             {children}

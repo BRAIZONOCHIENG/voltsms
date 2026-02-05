@@ -1,32 +1,32 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { FaSave, FaEye, FaEyeSlash, FaEdit, FaServer, FaPaypal, FaCreditCard, FaDatabase } from 'react-icons/fa';
+import { FaSave, FaEye, FaEyeSlash, FaEdit, FaServer, FaPaypal, FaCreditCard, FaDatabase, FaShieldAlt } from 'react-icons/fa';
 
 // Map specific keys to providers
 const PROVIDERS = [
     {
-        id: 'paypal',
-        name: 'PayPal',
-        icon: <FaPaypal className="text-blue-500" />,
-        keys: ['PAYPAL_CLIENT_ID', 'PAYPAL_SECRET']
+        id: 'pvapins',
+        name: 'PVAPins (Core)',
+        icon: <FaShieldAlt className="text-orange-500" />,
+        keys: ['PVAPINS_API_KEY']
     },
     {
         id: 'smspool',
-        name: 'SMSPool',
+        name: 'SMSPool (Backup)',
         icon: <FaServer className="text-purple-500" />,
         keys: ['SMSPOOL_API_KEY']
     },
     {
         id: 'oxapay',
-        name: 'Oxapay',
+        name: 'Oxapay (Crypto)',
         icon: <FaCreditCard className="text-green-500" />,
         keys: ['OXAPAY_MERCHANT_KEY']
     },
     {
-        id: 'paystack',
-        name: 'Paystack',
-        icon: <FaCreditCard className="text-cyan-500" />,
-        keys: ['PAYSTACK_SECRET_KEY']
+        id: 'turnstile',
+        name: 'Cloudflare Turnstile',
+        icon: <FaShieldAlt className="text-orange-500" />,
+        keys: ['NEXT_PUBLIC_TURNSTILE_SITE_KEY']
     },
     {
         id: 'supabase',
@@ -35,15 +35,9 @@ const PROVIDERS = [
         keys: ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']
     },
     {
-        id: 'telegram',
-        name: 'Support Email',
-        icon: <FaServer className="text-blue-400" />,
-        keys: ['BOT_TOKEN', 'ADMIN_ID']
-    },
-    {
         id: 'webshare',
-        name: 'Webshare',
-        icon: <FaServer className="text-orange-500" />,
+        name: 'Webshare (Proxies)',
+        icon: <FaServer className="text-blue-500" />,
         keys: ['WEBSHARE_API_KEY']
     }
 ];

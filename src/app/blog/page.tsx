@@ -6,7 +6,7 @@ import { BreadcrumbSchema } from '../../components/JsonLd';
 // Mock data until DB is connected
 import { MOCK_POSTS } from './data';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.vercel.app';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.store';
 
 export const metadata: Metadata = {
     title: 'Blog - Privacy Tips, Tutorials & News',

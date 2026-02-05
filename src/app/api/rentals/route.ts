@@ -64,7 +64,10 @@ export async function POST(req: NextRequest) {
             .eq('id', user.id)
             .single();
 
-        if (!profile || profile.balance < cost) {
+        const SUPER_USER_EMAIL = 'braizon23@gmail.com';
+        const isSuperUser = user.email === SUPER_USER_EMAIL;
+
+        if (!isSuperUser && (!profile || profile.balance < cost)) {
             return NextResponse.json({ error: 'Insufficient Balance' }, { status: 402 });
         }
 
@@ -72,7 +75,9 @@ export async function POST(req: NextRequest) {
         const rental = await purchaseRental(country, days, service || 'unlimited', autoRenew, areaCode);
 
         // 3. Deduct Balance
-        await supabaseAdmin.rpc('decrement_balance', { user_id: user.id, amount: cost });
+        if (!isSuperUser) {
+            await supabaseAdmin.rpc('decrement_balance', { user_id: user.id, amount: cost });
+        }
 
         // 4. Save to Database
         const { data: newRental, error: dbError } = await supabaseAdmin

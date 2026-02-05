@@ -26,11 +26,26 @@ export default function Terms() {
                             When you create an account with us, you must provide a secure password. You are responsible for safeguarding the password that you use to access the Service and for any activities or actions under your password. We encourage the use of strong, unique passwords.
                         </p>
 
-                        <h3 className="text-white text-xl font-bold mt-8">3. Refunds and Payments</h3>
-                        <ul className="list-disc pl-5 space-y-2">
-                            <li><strong>Failed Verifications:</strong> If a number fails to receive a code within the timeout period (usually 15-20 minutes), the transaction is automatically cancelled, and the funds are instantly returned to your account balance.</li>
-                            <li><strong>Crypto Deposits:</strong> Cryptocurrency deposits are final. Due to the irreversible nature of blockchain transactions, we cannot reverse a deposit once it has been confirmed on the network.</li>
-                            <li><strong>Refund Requests:</strong> Refunds of unused account balances back to an external wallet are handled on a case-by-case basis and may be subject to a processing fee. Please contact support.</li>
+                        <h3 className="text-white text-xl font-bold mt-8">3. Payment & Refund Policy</h3>
+                        <p>
+                            By making a deposit or purchase on VoltSMS, you acknowledge and agree to the following strictly enforced policies regarding digital goods and cryptocurrency assets:
+                        </p>
+                        <ul className="list-disc pl-5 space-y-3">
+                            <li>
+                                <strong>All Sales Are Final:</strong> Due to the immediate and consumable nature of digital verification services, all successful purchases where a verification code is delivered are final and non-refundable.
+                            </li>
+                            <li>
+                                <strong>"No-Code" Protection Guarantee:</strong> We prioritize fair service. If a purchased number fails to receive a verification code within the active timeout period, the order will be automatically marked as failed, and the full credit amount will be <strong>instantly refunded to your VoltSMS account balance</strong> for use on a different service.
+                            </li>
+                            <li>
+                                <strong>Cryptocurrency Deposits:</strong> You acknowledge that cryptocurrency transactions (Bitcoin, Litecoin, USDT, etc.) are technically irreversible. Once a deposit is confirmed on the blockchain, it cannot be canceled, reversed, or charged back. As such, <strong>we do not offer refunds of deposited funds back to external wallets</strong> under any circumstances. Balance is for platform use only.
+                            </li>
+                            <li>
+                                <strong>Unused Balance:</strong> Account credits do not expire, but they hold no monetary value outside of the Service and cannot be redeemed for cash or crypto.
+                            </li>
+                            <li>
+                                <strong>Account Termination:</strong> If your account is terminated due to a violation of our Terms (e.g., using the service for illegal activities), any remaining balance is immediately forfeited and will not be refunded.
+                            </li>
                         </ul>
 
                         <h3 className="text-white text-xl font-bold mt-8">4. Prohibited Behaviors</h3>
