@@ -4,7 +4,6 @@ import Navbar from '../../components/Navbar';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { Turnstile } from '@marsidev/react-turnstile';
 import { supabase } from '../../lib/supabaseClient';
 
 function LoginContent() {
@@ -13,7 +12,6 @@ function LoginContent() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [captchaToken, setCaptchaToken] = useState<string | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
     const verified = searchParams.get('verified');
@@ -22,12 +20,6 @@ function LoginContent() {
         e.preventDefault();
         setLoading(true);
         setError('');
-
-        if (!captchaToken) {
-            setError('Please complete the captcha verification.');
-            setLoading(false);
-            return;
-        }
 
         try {
             const { data, error } = await supabase.auth.signInWithPassword({
@@ -103,7 +95,7 @@ function LoginContent() {
                         </div>
                     </div>
 
-                    {/* Turnstile Captcha */}
+
 
 
                     <div className="flex justify-end">

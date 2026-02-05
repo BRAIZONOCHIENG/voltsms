@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
-import { Turnstile } from '@marsidev/react-turnstile';
 import { supabase } from '../../lib/supabaseClient';
 
 export default function Register() {
@@ -14,7 +13,6 @@ export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [acceptedTerms, setAcceptedTerms] = useState(false);
-    const [captchaToken, setCaptchaToken] = useState<string | null>(null);
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
     const router = useRouter();
 
@@ -24,11 +22,6 @@ export default function Register() {
 
         if (!acceptedTerms) {
             setError('You must accept the Terms of Service and Privacy Policy to register.');
-            return;
-        }
-
-        if (!captchaToken) {
-            setError('Please complete the captcha verification.');
             return;
         }
 
