@@ -154,7 +154,7 @@ export default function Register() {
                             <span className="absolute top-0 left-0 text-[8px] text-white/20 p-1">Widget Container</span>
 
                             <Turnstile
-                                siteKey="0x4AAAAAACYEgj6eKX_XteKh"
+                                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
                                 onSuccess={(token) => {
                                     console.log("Turnstile Success:", token);
                                     setCaptchaToken(token);

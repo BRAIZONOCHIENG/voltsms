@@ -199,38 +199,29 @@ export default function Home() {
       <section className="py-16 relative z-10">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-red-500/30 transition-colors"
-            >
+            <div className="p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-red-500/30 transition-all hover:-translate-y-1">
               <FaShieldAlt className="text-4xl text-red-500 mb-6" />
               <h3 className="text-xl font-bold mb-2">Non-VoIP Guarantee</h3>
               <p className="text-stone-400 text-sm leading-relaxed">
                 Our numbers come from real SIM cards, ensuring the highest success rates for platforms that block VoIP.
               </p>
-            </motion.div>
+            </div>
 
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-purple-500/30 transition-colors"
-            >
+            <div className="p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-purple-500/30 transition-all hover:-translate-y-1">
               <FaBolt className="text-4xl text-purple-500 mb-6" />
               <h3 className="text-xl font-bold mb-2">Instant Delivery</h3>
               <p className="text-stone-400 text-sm leading-relaxed">
                 Automated system delivers numbers and codes 24/7. No waiting for manual processing.
               </p>
-            </motion.div>
+            </div>
 
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-blue-500/30 transition-colors"
-            >
+            <div className="p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-blue-500/30 transition-all hover:-translate-y-1">
               <FaUserSecret className="text-4xl text-blue-500 mb-6" />
               <h3 className="text-xl font-bold mb-2">Anonymous</h3>
               <p className="text-stone-400 text-sm leading-relaxed">
                 Protect your identity. Use our numbers for temporary verifications without linking your personal phone.
               </p>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>

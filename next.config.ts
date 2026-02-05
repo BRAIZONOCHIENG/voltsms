@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.simpleicons.org https://*.paystack.co https://*.paystack.com https://*.paypal.com https://*.paypalobjects.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://cdn.simpleicons.org https: https://api.qrserver.com; font-src 'self' data:; connect-src 'self' https://cdn.simpleicons.org https:; frame-src 'self' https://*.paystack.co https://*.paystack.com https://*.paypal.com;"
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.simpleicons.org https://*.paystack.co https://*.paystack.com https://*.paypal.com https://*.paypalobjects.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://cdn.simpleicons.org https: https://api.qrserver.com; font-src 'self' data:; connect-src 'self' https://cdn.simpleicons.org https: https://challenges.cloudflare.com; frame-src 'self' https://*.paystack.co https://*.paystack.com https://*.paypal.com https://challenges.cloudflare.com;"
           }
         ]
       }
