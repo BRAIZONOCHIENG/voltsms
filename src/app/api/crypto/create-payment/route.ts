@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
         }
 
         const orderId = `order-${user.id}-${Date.now()}`;
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.store';
 
         // Generate Payment Link
         // OxaPay expects string for amount often
