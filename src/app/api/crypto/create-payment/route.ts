@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
         const { amount, currency } = await req.json();
 
         // Validate amount
-        if (!amount || amount < 3) {
-            return NextResponse.json({ success: false, error: 'Minimum deposit is $3' }, { status: 400 });
+        if (!amount || amount < 1) {
+            return NextResponse.json({ success: false, error: 'Minimum deposit is $1' }, { status: 400 });
         }
 
         // Validate currency (Optional for request, but good for tracking)
