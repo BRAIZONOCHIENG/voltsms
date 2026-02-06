@@ -100,8 +100,8 @@ export default function DepositSection({ userToken, onDepositSuccess }: DepositS
         if (!selectedCoin) return;
 
         const amount = parseFloat(depositAmount);
-        if (isNaN(amount) || amount < 5) {
-            alert('Minimum deposit is $5');
+        if (isNaN(amount) || amount < 1) {
+            alert('Minimum deposit is $1');
             return;
         }
 
