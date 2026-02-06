@@ -9,6 +9,65 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 // PVAPins Config
 const PVAPINS_API_KEY = process.env.PVAPINS_API_KEY!;
 
+// PVAPins uses country NAMES, not ISO codes. Map common codes to PVAPins names.
+const COUNTRY_CODE_TO_PVAPINS: Record<string, string> = {
+    'US': 'USA',
+    'GB': 'UK',
+    'CA': 'Canada',
+    'AU': 'Australia',
+    'DE': 'Germany',
+    'NL': 'Netherlands',
+    'FR': 'France',
+    'ES': 'Spain',
+    'IT': 'Italy',
+    'IN': 'India',
+    'ID': 'Indonesia',
+    'PH': 'Philippines',
+    'MY': 'Malaysia',
+    'TH': 'Thailand',
+    'VN': 'Vietnam',
+    'BR': 'Brazil',
+    'MX': 'Mexico',
+    'RU': 'Russia',
+    'PL': 'Poland',
+    'UA': 'Ukraine',
+    'NG': 'Nigeria',
+    'KE': 'Kenya',
+    'ZA': 'South Africa',
+    'EG': 'Egypt',
+    'PK': 'Pakistan',
+    'BD': 'Bangladesh',
+    'TR': 'Turkey',
+    'AE': 'UAE',
+    'SA': 'Saudi Arabia',
+    'JP': 'Japan',
+    'KR': 'South Korea',
+    'CN': 'China',
+    'HK': 'Hong Kong',
+    'SG': 'Singapore',
+    'TW': 'Taiwan',
+    'AR': 'Argentina',
+    'CL': 'Chile',
+    'CO': 'Colombia',
+    'PE': 'Peru',
+    'VE': 'Venezuela',
+    'SE': 'Sweden',
+    'NO': 'Norway',
+    'DK': 'Denmark',
+    'FI': 'Finland',
+    'BE': 'Belgium',
+    'AT': 'Austria',
+    'CH': 'Switzerland',
+    'PT': 'Portugal',
+    'GR': 'Greece',
+    'CZ': 'Czech Republic',
+    'RO': 'Romania',
+    'HU': 'Hungary',
+    'IE': 'Ireland',
+    'NZ': 'New Zealand',
+    'IL': 'Israel',
+};
+
 
 
 export async function POST(req: Request) {
@@ -47,12 +106,21 @@ export async function POST(req: Request) {
         // 3. Purchase from PVAPins
         const pvaClient = new PVAPinsClient(PVAPINS_API_KEY);
 
+        // Convert country code to PVAPins country name
+        const countryUpper = country?.toUpperCase() || '';
+        const pvapinsCountry = COUNTRY_CODE_TO_PVAPINS[countryUpper] || country;
+
+        // Normalize service name (lowercase for PVAPins API)
+        const pvapinsService = service?.toLowerCase() || '';
+
+        console.log(`[Buy API] Purchasing: service=${pvapinsService}, country=${pvapinsCountry} (original: ${country})`);
+
         let order;
 
         try {
-            order = await pvaClient.purchaseNumber(service, country);
+            order = await pvaClient.purchaseNumber(pvapinsService, pvapinsCountry);
         } catch (e: any) {
-            console.error("PVAPins Purchase Error:", e);
+            console.error("PVAPins Purchase Error:", e.message || e);
             return NextResponse.json({
                 error: 'Stock currently unavailable for this service. Please try a different country or service.'
             }, { status: 503 });

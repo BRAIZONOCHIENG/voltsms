@@ -49,33 +49,77 @@ export class PVAPinsClient implements SMSProvider {
         }
     }
 
+    private async fetchRaw(endpoint: string, params: Record<string, string> = {}): Promise<string> {
+        const url = new URL(`${PVAPINS_BASE_URL}/${endpoint}`);
+        url.searchParams.append('customer', this.apiKey);
+
+        for (const [k, v] of Object.entries(params)) {
+            url.searchParams.append(k, v);
+        }
+
+        console.log(`[PVAPins] Request: ${url.toString().replace(this.apiKey, '***')}`);
+
+        const res = await fetch(url.toString());
+        if (!res.ok) {
+            throw new Error(`PVAPins API Error: ${res.status}`);
+        }
+        return res.text();
+    }
+
     async purchaseNumber(serviceId: string, countryId: string): Promise<SMSOrder> {
         // Endpoint: get_number.php
-        // Params: country, app (service)
-        // Note: PVAPins uses 'app' param usually, not 'service'. Let's verify documentation or assume 'app'.
-        // Based on typical scripts for this API family: get_number.php?country=X&app=Y
+        // Params: country (NAME like "Indonesia"), app (service name like "telegram")
+        // Response: Plain phone number on success, error text on failure
 
-        const data = await this.fetch('get_number.php', {
+        const rawResponse = await this.fetchRaw('get_number.php', {
             country: countryId,
             app: serviceId
         });
 
-        // Response check
-        // Success: { number: '...', id: '...', price: '...', ... }
-        // Error: { Error: '...' } or { error: '...' }
+        console.log(`[PVAPins] Purchase response: ${rawResponse}`);
 
-        if (data.Error || data.error) {
-            throw new Error(data.Error || data.error || 'Failed to purchase number');
+        // Check for known error messages
+        const lowerResponse = rawResponse.toLowerCase();
+        if (lowerResponse.includes('not found') ||
+            lowerResponse.includes('no free channels') ||
+            lowerResponse.includes('error') ||
+            lowerResponse.includes('invalid') ||
+            lowerResponse.includes('insufficient')) {
+            throw new Error(rawResponse);
         }
 
-        if (!data.number) {
-            throw new Error('No number returned from PVAPins');
+        // Try to parse as JSON first (in case API changes)
+        try {
+            const jsonData = JSON.parse(rawResponse);
+            if (jsonData.error || jsonData.Error) {
+                throw new Error(jsonData.error || jsonData.Error);
+            }
+            if (jsonData.number) {
+                return {
+                    orderId: jsonData.id?.toString() || `pva-${Date.now()}`,
+                    phoneNumber: jsonData.number,
+                    cost: parseFloat(jsonData.price) || 0,
+                    provider: 'pvapins',
+                    country: countryId,
+                    service: serviceId
+                };
+            }
+        } catch (e) {
+            // Not JSON, continue with plain text handling
+        }
+
+        // Plain text response - should be a phone number
+        const phoneNumber = rawResponse.trim();
+
+        // Validate it looks like a phone number (digits only, 10-15 chars)
+        if (!/^\d{10,15}$/.test(phoneNumber)) {
+            throw new Error(`Invalid response from PVAPins: ${rawResponse.substring(0, 100)}`);
         }
 
         return {
-            orderId: data.id.toString(),
-            phoneNumber: data.number,
-            cost: parseFloat(data.price),
+            orderId: `pva-${Date.now()}`, // Generate our own order ID since API doesn't provide one
+            phoneNumber: phoneNumber,
+            cost: 0, // Will use price from frontend
             provider: 'pvapins',
             country: countryId,
             service: serviceId
