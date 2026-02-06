@@ -51,12 +51,13 @@ export async function POST(req: NextRequest) {
         // Generate Payment Link
         // OxaPay expects string for amount often
         const callbackUrl = `${siteUrl}/api/crypto/webhook`;
+        const returnUrl = `${siteUrl}/dashboard`;
         const oxapayPayload = {
             merchant: process.env.OXAPAY_MERCHANT_KEY,
             amount: amount.toString(),
             currency: currencyUpper,
             callbackUrl: callbackUrl,
-            orderId: orderId
+            returnUrl: returnUrl
         };
 
         console.log('OxaPay Callback URL:', callbackUrl);
