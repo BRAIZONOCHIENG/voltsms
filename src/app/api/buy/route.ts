@@ -111,9 +111,13 @@ export async function POST(req: Request) {
         const pvapinsCountry = COUNTRY_CODE_TO_PVAPINS[countryUpper] || country;
 
         // Normalize service name (lowercase for PVAPins API)
-        const pvapinsService = service?.toLowerCase() || '';
+        // Map special service IDs to PVAPins-compatible names
+        let pvapinsService = service?.toLowerCase() || '';
+        if (pvapinsService === '9999' || pvapinsService === 'other' || pvapinsService === 'ot') {
+            pvapinsService = 'anyother'; // PVAPins uses 'anyother' for generic services
+        }
 
-        console.log(`[Buy API] Purchasing: service=${pvapinsService}, country=${pvapinsCountry} (original: ${country})`);
+        console.log(`[Buy API] Purchasing: service=${pvapinsService}, country=${pvapinsCountry} (original: ${service}, ${country})`);
 
         let order;
 
