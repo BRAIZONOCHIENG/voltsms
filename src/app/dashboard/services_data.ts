@@ -1,24 +1,28 @@
+/*
+ * -----------------------------------------------------------------------------
+ * 🔒 LOCKED FILE - SERVICE DATA
+ * -----------------------------------------------------------------------------
+ * Contains pricing and category data.
+ * ID changes here will break the mapping to SMSPool.
+ * 
+ * See .agent/workflows/protected-files.md for details.
+ * -----------------------------------------------------------------------------
+ */
 import { Service } from './services';
 
 export const SERVICES_DATA: Service[] = [
-    {
-        "id": "9999",
-        "name": "Service Not Listed",
-        "price": 0.75,
-        "category": "Other",
-        "icon": null
-    },
+
     {
         "id": "bumble",
         "name": "Bumble",
-        "price": 0.50,
+        "price": 0.65,
         "category": "Social",
         "icon": null
     },
     {
         "id": "discord",
         "name": "Discord",
-        "price": 0.50,
+        "price": 0.60,
         "category": "Social",
         "icon": "discord.svg"
     },
@@ -32,7 +36,7 @@ export const SERVICES_DATA: Service[] = [
     {
         "id": "linkedin",
         "name": "LinkedIn",
-        "price": 0.50,
+        "price": 0.60,
         "category": "Other",
         "icon": "linkedin.svg"
     },
@@ -46,21 +50,21 @@ export const SERVICES_DATA: Service[] = [
     {
         "id": "snapchat",
         "name": "Snapchat",
-        "price": 0.50,
+        "price": 0.60,
         "category": "Social",
         "icon": "snapchat.svg"
     },
     {
         "id": "telegram",
         "name": "Telegram",
-        "price": 0.60,
+        "price": 0.70,
         "category": "Social",
         "icon": "telegram.svg"
     },
     {
         "id": "tinder",
         "name": "Tinder",
-        "price": 0.50,
+        "price": 0.65,
         "category": "Social",
         "icon": "tinder.svg"
     },
@@ -81,7 +85,7 @@ export const SERVICES_DATA: Service[] = [
     {
         "id": "google",
         "name": "Google/YouTube",
-        "price": 0.60,
+        "price": 0.75,
         "category": "Other",
         "icon": "google.svg"
     },
@@ -3063,7 +3067,7 @@ export const SERVICES_DATA: Service[] = [
     {
         "id": "googlegmail",
         "name": "Google/Gmail",
-        "price": 0.6,
+        "price": 0.75,
         "category": "Email",
         "icon": null
     },
@@ -5118,13 +5122,7 @@ export const SERVICES_DATA: Service[] = [
         "category": "Other",
         "icon": null
     },
-    {
-        "id": "notlistedotherany",
-        "name": "Not Listed / Other / Any",
-        "price": 0.6,
-        "category": "Other",
-        "icon": null
-    },
+
     {
         "id": "notify",
         "name": "Notify",

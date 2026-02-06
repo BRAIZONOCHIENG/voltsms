@@ -1,5 +1,15 @@
 "use client";
-import { useEffect, useState, useMemo, useRef } from 'react';
+/*
+ * -----------------------------------------------------------------------------
+ * 🔒 LOCKED FILE - DASHBOARD CORE
+ * -----------------------------------------------------------------------------
+ * This is the main dashboard logic. It handles order state, refreshing,
+ * and service selection. It is complex and critical.
+ * 
+ * See .agent/workflows/protected-files.md for details.
+ * -----------------------------------------------------------------------------
+ */
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Navbar from '../../components/Navbar';
 import { useRouter } from 'next/navigation';
 import { FaSearch, FaWallet, FaShoppingCart, FaChevronDown, FaRegStar, FaStar, FaQuestionCircle, FaClock, FaHistory, FaCheckCircle, FaTimesCircle, FaPlay, FaPlus } from 'react-icons/fa';
@@ -98,15 +108,8 @@ const ServiceRow = ({ data, index, style }: { data: ServiceRowData; index: numbe
                     >
                         {isPinned ? <FaStar className="text-sm" /> : <FaRegStar className="text-sm" />}
                     </div>
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 shrink-0 font-bold text-xs overflow-hidden">
-                        {svc.id === 'custom' ? <FaQuestionCircle className="text-blue-500 text-lg" /> : (
-                            <img
-                                src={`/icons/${getServiceIconSlug(svc.name)}.svg`}
-                                alt={svc.name}
-                                className="w-5 h-5 object-contain"
-                                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = svc.name.charAt(0).toUpperCase(); }}
-                            />
-                        )}
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 shrink-0 font-bold text-xs">
+                        {svc.id === 'custom' ? <FaQuestionCircle className="text-blue-500 text-lg" /> : svc.name.charAt(0).toUpperCase()}
                     </div>
                     <span className={`truncate max-w-[240px] ${isSelected ? 'text-white font-medium' : 'text-stone-300'}`}>{svc.name}</span>
                 </div>
@@ -225,14 +228,34 @@ export default function Dashboard() {
                         !serverOrders.find((so: Order) => so.order_id === o.order_id)
                     );
 
-                    return [...recentOptimistic, ...serverOrders];
+                    // Merge server orders with preserved expires_at from previous state
+                    const mergedServerOrders = serverOrders.map((so: any) => {
+                        const prevOrder = prev.find(p => p.order_id === so.order_id);
+                        // Calculate expires_at: use previous value, or calculate from created_at (20 mins)
+                        let expiresAt = prevOrder?.expires_at;
+                        if (!expiresAt && so.created_at) {
+                            expiresAt = new Date(so.created_at).getTime() + 20 * 60 * 1000;
+                        }
+                        // Map cost to price for display
+                        return { ...so, expires_at: expiresAt, price: so.cost || prevOrder?.price || 0 };
+                    });
+
+                    return [...recentOptimistic, ...mergedServerOrders];
                 });
 
-                // Auto-update modal if open
+                // Auto-update modal if open - preserve expires_at and price
                 setModalOrder(prev => {
                     if (!prev) return null;
-                    const found = serverOrders.find((o: Order) => o.order_id === prev.order_id);
-                    return found || prev;
+                    const found = serverOrders.find((o: any) => o.order_id === prev.order_id);
+                    if (found) {
+                        // Preserve expires_at and price from current modal order
+                        return {
+                            ...found,
+                            expires_at: prev.expires_at || found.expires_at,
+                            price: found.cost || prev.price || 0
+                        };
+                    }
+                    return prev;
                 });
             }
         } catch (e) {
@@ -368,8 +391,14 @@ export default function Dashboard() {
 
     const handleCancelOrder = async (orderId: string) => {
         try {
-            const token = userToken;
-            if (!token) return;
+            // Get fresh token to avoid stale token issues
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            if (!token) {
+                alert('Please log in again');
+                router.push('/login');
+                return;
+            }
             const res = await fetch('/api/cancel', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ orderId })
@@ -386,6 +415,27 @@ export default function Dashboard() {
         } catch (e) { console.error(e); }
     };
 
+    const handleOrderTimeout = async (orderId: string) => {
+        try {
+            // Get fresh token to avoid stale token issues
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            if (!token) return;
+            // Update local state immediately
+            setOrders(prev => prev.map(o =>
+                o.order_id === orderId ? { ...o, status: 'expired' } : o
+            ));
+            // Update database - mark as expired (SMSPool handles refund automatically)
+            await fetch('/api/orders/expire', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ orderId })
+            });
+            // Refresh data
+            fetchData(token);
+        } catch (e) { console.error(e); }
+    };
+
     return (
         <main className={`min-h-screen bg-[#09090b] text-white transition-all duration-300 ${isDropdownOpen || isCountryDropdownOpen ? 'pb-80' : 'pb-20'}`}>
             <Navbar />
@@ -394,6 +444,7 @@ export default function Dashboard() {
                 onClose={() => setIsModalOpen(false)}
                 order={modalOrder}
                 onCancel={handleCancelOrder}
+                onTimeout={handleOrderTimeout}
                 onReport={() => router.push('/contact')}
             />
 

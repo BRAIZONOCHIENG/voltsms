@@ -1,5 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+/*
+ * -----------------------------------------------------------------------------
+ * 🔒 LOCKED FILE - CRITICAL INFRASTRUCTURE
+ * -----------------------------------------------------------------------------
+ * DO NOT MODIFY checking logic casually.
+ * This file handles polling SMSPool for codes. Breaking this means users
+ * won't receive their verification codes.
+ * 
+ * See .agent/workflows/protected-files.md for details.
+ * -----------------------------------------------------------------------------
+ */
 import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
 
 export const dynamic = 'force-dynamic';

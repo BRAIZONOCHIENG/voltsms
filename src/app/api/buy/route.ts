@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
+/*
+ * -----------------------------------------------------------------------------
+ * 🔒 LOCKED FILE - CRITICAL PAYMENT INFRASTRUCTURE
+ * -----------------------------------------------------------------------------
+ * DO NOT MODIFY this file without extreme caution.
+ * It handles real money transactions, balance deductions, and external API calls.
+ * Accidental changes here can cause financial loss or service outage.
+ * 
+ * See .agent/workflows/protected-files.md for details.
+ * -----------------------------------------------------------------------------
+ */
+import { SMSPOOL_SERVICE_MAPPING } from '@/lib/smspool_service_mapping';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -56,39 +68,11 @@ const COUNTRY_CODE_TO_SMSPOOL: Record<string, string> = {
     'CN': '156',  // China
 };
 
-// Map service names to SMSPool service IDs
-const SERVICE_NAME_TO_SMSPOOL: Record<string, string> = {
-    'telegram': '109',
-    'whatsapp': '120',
-    'facebook': '49',
-    'instagram': '67',
-    'tiktok': '102',
-    'twitter': '110',
-    'google': '57',
-    'discord': '45',
-    'snapchat': '94',
-    'amazon': '270',
-    'uber': '112',
-    'lyft': '73',
-    'doordash': '291',
-    'paypal': '82',
-    'venmo': '117',
-    'cashapp': '300',
-    'microsoft': '77',
-    'apple': '271',
-    'spotify': '96',
-    'netflix': '80',
-    'bumble': '35',
-    'tinder': '103',
-    'hinge': '62',
-    'linkedin': '71',
-    'openai': '618', // ChatGPT
-    'coinbase': '41',
-    'binance': '32',
-    'kraken': '388',
-    '9999': '0', // "Service Not Listed" - use "any" service
-    'anyother': '0',
-    'other': '0',
+// Special overrides for common service names (supplements the full SMSPOOL_SERVICE_MAPPING)
+const SERVICE_OVERRIDES: Record<string, string> = {
+    '9999': '817', // "Service Not Listed" / "Not Listed / Other / Any"
+    'anyother': '817',
+    'other': '817',
 };
 
 export async function POST(req: Request) {
@@ -132,7 +116,20 @@ export async function POST(req: Request) {
 
         // Convert service name to SMSPool service ID
         const serviceLower = service?.toLowerCase() || '';
-        const smspoolService = SERVICE_NAME_TO_SMSPOOL[serviceLower] || service;
+        // Normalize: remove special characters for lookup
+        const serviceNormalized = serviceLower.replace(/[^a-z0-9]/g, '');
+
+        // First check overrides, then the full static mapping
+        let smspoolService = SERVICE_OVERRIDES[serviceLower] ||
+            SERVICE_OVERRIDES[serviceNormalized] ||
+            SMSPOOL_SERVICE_MAPPING[serviceLower] ||
+            SMSPOOL_SERVICE_MAPPING[serviceNormalized];
+
+        if (!smspoolService) {
+            console.log(`[Buy API] No mapping found for service="${serviceLower}" (normalized: "${serviceNormalized}")`);
+            // Last resort: use raw service value
+            smspoolService = service;
+        }
 
         console.log(`[Buy API] SMSPool Purchase: service=${smspoolService} (${serviceLower}), country=${smspoolCountry} (${country})`);
 
@@ -142,8 +139,9 @@ export async function POST(req: Request) {
             order = await smsClient.purchaseNumber(smspoolService, smspoolCountry);
         } catch (e: any) {
             console.error("SMSPool Purchase Error:", e.message || e);
+            // Don't expose internal provider errors to users
             return NextResponse.json({
-                error: e.message || 'Stock currently unavailable for this service. Please try a different country or service.'
+                error: 'This service is currently unavailable. Please try a different country or service.'
             }, { status: 503 });
         }
 
@@ -166,10 +164,9 @@ export async function POST(req: Request) {
                 order_id: order.orderId,
                 service: serviceName || service,
                 phone: order.phoneNumber,
-                cost: price, // Revenue
-                provider_cost: order.cost, // Expense
-                status: 'pending',
-                provider: 'smspool'
+                cost: price,
+                provider_cost: order.cost,
+                status: 'pending'
             });
 
             if (insertError) throw insertError;
@@ -182,7 +179,7 @@ export async function POST(req: Request) {
                 .update({ balance: currentBalance })
                 .eq('user_id', user.id);
 
-            return NextResponse.json({ error: 'Transaction failed. Please try again. Balance refunded.' }, { status: 500 });
+            return NextResponse.json({ error: 'Transaction failed. Please try again.' }, { status: 500 });
         }
 
         return NextResponse.json({
@@ -190,7 +187,7 @@ export async function POST(req: Request) {
             phone: order.phoneNumber,
             order_id: order.orderId,
             new_balance: newBalance,
-            expires_at: new Date(Date.now() + 15 * 60000).toISOString() // 15 mins default
+            expires_at: order.expiresAt ? order.expiresAt.toISOString() : new Date(Date.now() + 20 * 60000).toISOString()
         });
 
     } catch (error: any) {

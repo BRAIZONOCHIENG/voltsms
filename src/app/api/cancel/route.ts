@@ -1,5 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+/*
+ * -----------------------------------------------------------------------------
+ * 🔒 LOCKED FILE - CRITICAL PAYMENT INFRASTRUCTURE
+ * -----------------------------------------------------------------------------
+ * DO NOT MODIFY this file without extreme caution.
+ * It handles order cancellations and refund logic.
+ * 
+ * See .agent/workflows/protected-files.md for details.
+ * -----------------------------------------------------------------------------
+ */
 import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { FaChartLine, FaNewspaper, FaCreditCard, FaCog, FaSignOutAlt, FaBars, FaTimes, FaServer } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -50,7 +51,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 className="hidden md:flex flex-col bg-white/5 backdrop-blur-xl border-r border-white/10 h-screen sticky top-0 z-20 overflow-hidden"
             >
                 <div className="p-6 border-b border-white/10 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-white">V</div>
+                    <div className="w-8 h-8 flex items-center justify-center">
+                        <NextImage src="/voltsms-logo.png" alt="VoltSMS Logo" width={32} height={32} className="object-contain" />
+                    </div>
                     <span className="font-bold text-lg tracking-wide">VoltAdmin</span>
                 </div>
 

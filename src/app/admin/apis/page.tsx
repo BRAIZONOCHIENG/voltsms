@@ -33,12 +33,6 @@ const PROVIDERS = [
         name: 'Supabase',
         icon: <FaDatabase className="text-emerald-500" />,
         keys: ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']
-    },
-    {
-        id: 'webshare',
-        name: 'Webshare (Proxies)',
-        icon: <FaServer className="text-blue-500" />,
-        keys: ['WEBSHARE_API_KEY']
     }
 ];
 

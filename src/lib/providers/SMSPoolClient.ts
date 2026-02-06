@@ -1,5 +1,15 @@
 import { SMSProvider, SMSOrder } from './types';
 
+/*
+ * -----------------------------------------------------------------------------
+ * 🔒 LOCKED FILE - CRITICAL INFRASTRUCTURE
+ * -----------------------------------------------------------------------------
+ * Low-level SMSPool API interactions.
+ * Any changes here affect ALL SMS operations (buy, check, cancel).
+ * 
+ * See .agent/workflows/protected-files.md for details.
+ * -----------------------------------------------------------------------------
+ */
 const SMSPOOL_BASE_URL = 'https://api.smspool.net';
 
 export class SMSPoolClient implements SMSProvider {
@@ -61,13 +71,18 @@ export class SMSPoolClient implements SMSProvider {
             throw new Error('No phone number returned from SMSPool');
         }
 
+        // Calculate expiration time from expires_in (seconds)
+        const expiresIn = data.expires_in || 1200; // Default 20 mins
+        const expiresAt = new Date(Date.now() + expiresIn * 1000);
+
         return {
-            orderId: data.order_id?.toString() || `smspool-${Date.now()}`,
+            orderId: data.order_id?.toString() || data.orderid?.toString() || `smspool-${Date.now()}`,
             phoneNumber: data.phonenumber || data.number,
             cost: parseFloat(data.cost) || 0,
             provider: 'smspool',
             country: countryId,
-            service: serviceId
+            service: serviceId,
+            expiresAt: expiresAt
         };
     }
 
@@ -123,6 +138,38 @@ export class SMSPoolClient implements SMSProvider {
         } catch (e) {
             console.error('Failed to get SMSPool services', e);
             return [];
+        }
+    }
+
+    // Find a service ID by name - searches SMSPool services
+    async findServiceIdByName(serviceName: string, countryId: string = '1'): Promise<string | null> {
+        try {
+            const services = await this.getServices(countryId);
+            if (!services.length) return null;
+
+            // Normalize the service name for matching
+            const normalizedInput = serviceName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+            // Try exact match first
+            for (const svc of services) {
+                const svcName = (svc.name || svc.service || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (svcName === normalizedInput) {
+                    return svc.ID?.toString() || svc.id?.toString() || null;
+                }
+            }
+
+            // Try partial match (input contains service name or vice versa)
+            for (const svc of services) {
+                const svcName = (svc.name || svc.service || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (normalizedInput.includes(svcName) || svcName.includes(normalizedInput)) {
+                    return svc.ID?.toString() || svc.id?.toString() || null;
+                }
+            }
+
+            return null;
+        } catch (e) {
+            console.error('Failed to find service by name', e);
+            return null;
         }
     }
 

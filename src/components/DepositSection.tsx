@@ -1,4 +1,13 @@
 "use client";
+/*
+ * -----------------------------------------------------------------------------
+ * 🔒 LOCKED FILE - PAYMENT COMPONENT
+ * -----------------------------------------------------------------------------
+ * Crypto payment logic.
+ * 
+ * See .agent/workflows/protected-files.md for details.
+ * -----------------------------------------------------------------------------
+ */
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { FaBitcoin, FaCopy, FaSpinner, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
@@ -81,19 +90,28 @@ export default function DepositSection({ userToken, onDepositSuccess }: DepositS
     const [selectedCoin] = useState('USDT'); // Default to USDT for API compatibility
     const [loading, setLoading] = useState(false);
 
-    // Reset loading state if the user navigates back to this page
+    // Reset loading state on mount and when page becomes visible (back button)
     useEffect(() => {
         setLoading(false);
+        const handlePageShow = () => setLoading(false);
+        window.addEventListener('pageshow', handlePageShow);
+        return () => window.removeEventListener('pageshow', handlePageShow);
     }, []);
 
     const getAccessToken = async () => {
-        if (userToken) return userToken;
-        const { data: { session }, error } = await supabase.auth.refreshSession();
-        if (error) {
-            const currentSession = await supabase.auth.getSession();
-            return currentSession.data.session?.access_token || null;
+        // Always try to get a fresh token from the current session for payment actions
+        // disregarding the potentially stale userToken prop
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.access_token) {
+            return data.session.access_token;
         }
-        return session?.access_token || null;
+
+        // If no active session, try to refresh
+        const { data: refreshData, error } = await supabase.auth.refreshSession();
+        if (error || !refreshData.session) {
+            return null;
+        }
+        return refreshData.session.access_token;
     };
 
     const handleCreatePayment = async () => {
@@ -107,9 +125,10 @@ export default function DepositSection({ userToken, onDepositSuccess }: DepositS
 
         setLoading(true);
         try {
+            // Get fresh token directly
             const token = await getAccessToken();
             if (!token) {
-                alert('Please login first');
+                alert('Session expired. Please refresh the page.');
                 setLoading(false);
                 return;
             }

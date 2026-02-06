@@ -1,5 +1,14 @@
 "use client";
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+/*
+ * -----------------------------------------------------------------------------
+ * 🔒 LOCKED FILE - VERIFICATION COMPONENT
+ * -----------------------------------------------------------------------------
+ * Displays the SMS code and timer.
+ * 
+ * See .agent/workflows/protected-files.md for details.
+ * -----------------------------------------------------------------------------
+ */
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaCopy, FaCheckCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
 
@@ -20,42 +29,53 @@ interface VerificationModalProps {
     onClose: () => void; // Minimizes the modal
     order: Order | null;
     onCancel: (orderId: string) => void;
+    onTimeout?: (orderId: string) => void; // Called when order times out
     onReport?: (orderId: string) => void;
 }
 
-export default function VerificationModal({ isOpen, onClose, order, onCancel, onReport }: VerificationModalProps) {
+export default function VerificationModal({ isOpen, onClose, order, onCancel, onTimeout, onReport }: VerificationModalProps) {
     const [timeLeft, setTimeLeft] = useState<number>(0);
+    const [receivedCode, setReceivedCode] = useState<string | null>(null);
+    const [orderStatus, setOrderStatus] = useState<string>('pending');
+    const [hasTimedOut, setHasTimedOut] = useState<boolean>(false);
+
+    // Reset local state when order changes
+    useEffect(() => {
+        if (order) {
+            setReceivedCode(order.code || null);
+            setOrderStatus(order.status || 'pending');
+            setHasTimedOut(false);
+        }
+    }, [order?.order_id, order?.code, order?.status]);
 
     useEffect(() => {
-        if (!order || !order.expires_at || order.status === 'completed' || order.status === 'expired' || order.status === 'cancelled') return;
+        if (!order || !order.expires_at || orderStatus === 'completed' || orderStatus === 'expired' || orderStatus === 'cancelled') return;
 
         // Timer for countdown
         const updateTimer = () => {
             const now = Date.now();
             const remaining = Math.max(0, order.expires_at! - now);
             setTimeLeft(remaining);
+
+            // Handle timeout when timer reaches 0
+            if (remaining <= 0 && !hasTimedOut && orderStatus === 'pending') {
+                setHasTimedOut(true);
+                setOrderStatus('expired');
+                // Call timeout handler to update database and close modal
+                if (onTimeout) {
+                    onTimeout(order.order_id);
+                }
+                onClose();
+            }
         };
 
         updateTimer();
         const timerInterval = setInterval(updateTimer, 1000);
 
-        // POLL FOR SMS CODE
-        // We poll every 3 seconds to check if the code arrived
+        // POLL FOR SMS CODE - poll every 3 seconds
         const checkInterval = setInterval(async () => {
             try {
-                const res = await fetch('/api/check', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('supabase-auth-token')}` }, // We might need to pass auth token? 
-                    // Actually, the page might not have the token easily accessible here unless passed as prop or context.
-                    // For now, let's assume valid session cookie or handle existing auth patterns.
-                    // The dashboard typically uses supabase client auth.
-                    // The API routes use `supabaseAdmin.auth.getUser(token)`. 
-                    // We need to send the token. 
-                    body: JSON.stringify({ orderId: order.order_id })
-                });
-
-                // Since we need the token, let's get it from the standard Supabase session
-                // We'll quick-fetch it inside the interval to be safe
+                // Get auth token from Supabase session
                 const { data: { session } } = await import('../lib/supabaseClient').then(m => m.supabase.auth.getSession());
 
                 if (session?.access_token) {
@@ -71,31 +91,11 @@ export default function VerificationModal({ isOpen, onClose, order, onCancel, on
                     const data = await checkRes.json();
 
                     if (data.status === 'completed' && data.code) {
-                        // SUCCESS!
-                        // We could trigger a refresh via a callback prop, or just force reload? 
-                        // Better to call a callback.
-                        if (onReport) {
-                            // Wait, onReport is for reporting. We likely need an onComplete callback 
-                            // OR we just rely on the user refreshing, but providing immediate feedback is better.
-                            // For now, let's set a local state or reload.
-                            // Actually, the `order` prop comes from the parent. If we don't update parent, UI won't update.
-                            // The dashboard parent needs to know.
-                            // We'll emit `onClose` to force refresh? No.
-                            // We will imply it via window reload for MVP or just show it locally if we can.
-                            // The dashboard parent polls api/orders, which now actively checks for codes.
-                            // So we don't strictly need to force reload, but we should update the valid order prop if possible.
-                            // Ideally, we just let the polling interval in this modal (lines 44+) update the local state?
-                            // Ah, this effect relies on `order` prop updating.
-                            // The `onReport` callback isn't suitable for success.
-                            // We'll just let the UI re-render when `order` prop updates from parent, 
-                            // OR if we wanted to be self-contained, we'd update a local state override.
-                            // But for now, removing the reload is safer. The parent `fetchData` loop will catch the completion.
-                            // We can trigger a quick parent refresh if we had a callback.
-                            // window.location.reload(); // Removed to prevent jarring UX
-                        }
+                        // SUCCESS! Update local state to show the code immediately
+                        setReceivedCode(data.code);
+                        setOrderStatus('completed');
                     }
                 }
-
             } catch (e) {
                 console.error("Polling error", e);
             }
@@ -105,13 +105,17 @@ export default function VerificationModal({ isOpen, onClose, order, onCancel, on
             clearInterval(timerInterval);
             clearInterval(checkInterval);
         };
-    }, [order]);
+    }, [order?.order_id, order?.expires_at, orderStatus]);
 
     const formatTime = (ms: number) => {
         const m = Math.floor(ms / 60000);
         const s = Math.floor((ms % 60000) / 1000);
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
+
+    // Use local state for status and code display
+    const displayStatus = orderStatus;
+    const displayCode = receivedCode;
 
     if (!isOpen || !order) return null;
 
@@ -145,14 +149,14 @@ export default function VerificationModal({ isOpen, onClose, order, onCancel, on
                     </div>
 
                     {/* Status Banner */}
-                    <div className={`p-4 text-sm font-medium flex items-start gap-3 ${order.status === 'completed' ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-300'}`}>
-                        {order.status === 'completed' ? (
+                    <div className={`p-4 text-sm font-medium flex items-start gap-3 ${displayStatus === 'completed' ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-300'}`}>
+                        {displayStatus === 'completed' ? (
                             <FaCheckCircle className="text-lg shrink-0 mt-0.5" />
                         ) : (
                             <FaSpinner className="text-lg shrink-0 mt-0.5 animate-spin" />
                         )}
                         <div>
-                            {order.status === 'completed'
+                            {displayStatus === 'completed'
                                 ? "Verification completed successfully!"
                                 : `Waiting to receive ${order.type === 'voice' ? 'a call' : 'an SMS'} from ${order.service}. Please note that services may take multiple attempts.`
                             }
@@ -195,14 +199,14 @@ export default function VerificationModal({ isOpen, onClose, order, onCancel, on
 
                         {/* Code Display Area */}
                         <div className="bg-white/5 rounded-xl border border-white/10 p-6 text-center min-h-[120px] flex flex-col items-center justify-center">
-                            {order.status === 'completed' && order.code ? (
+                            {displayStatus === 'completed' && displayCode ? (
                                 <div className="animate-in fade-in zoom-in duration-300">
                                     <div className="text-xs text-stone-400 mb-2">Verification Code</div>
                                     <div className="text-4xl font-black text-white tracking-widest mb-4 font-mono select-all">
-                                        {order.code}
+                                        {displayCode}
                                     </div>
                                     <button
-                                        onClick={() => { navigator.clipboard.writeText(order.code!); alert('Code Copied!'); }}
+                                        onClick={() => { navigator.clipboard.writeText(displayCode!); alert('Code Copied!'); }}
                                         className="inline-flex items-center gap-2 text-sm font-bold text-[var(--color-primary)] hover:underline"
                                     >
                                         <FaCopy /> Copy Code Only
@@ -210,7 +214,7 @@ export default function VerificationModal({ isOpen, onClose, order, onCancel, on
                                 </div>
                             ) : (
                                 <div className="text-stone-500 text-sm max-w-[200px]">
-                                    {order.status === 'cancelled' ? (
+                                    {displayStatus === 'cancelled' ? (
                                         <span className="text-red-400">Order Cancelled</span>
                                     ) : (
                                         "SMS message content will appear here..."
@@ -230,7 +234,7 @@ export default function VerificationModal({ isOpen, onClose, order, onCancel, on
                     <div className="p-4 bg-white/5 border-t border-white/10 flex gap-3">
                         <button
                             onClick={() => onCancel(order.order_id)}
-                            disabled={order.status !== 'pending'}
+                            disabled={displayStatus !== 'pending'}
                             className="flex-1 px-4 py-3 rounded-xl border border-white/10 text-stone-300 hover:text-white hover:bg-white/5 font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Cancel

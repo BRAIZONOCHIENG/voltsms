@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PVAPinsClient } from '@/lib/providers/PVAPinsClient';
+import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,17 +8,14 @@ export async function GET(req: Request) {
     // For now, simpler check or rely on calling context. 
     // Ideally check for Admin Role in Supabase
 
-    // const authHeader = req.headers.get('Authorization');
-    // if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const SMSPOOL_API_KEY = process.env.SMSPOOL_API_KEY;
 
-    const PVAPINS_API_KEY = process.env.PVAPINS_API_KEY;
-
-    if (!PVAPINS_API_KEY) {
+    if (!SMSPOOL_API_KEY) {
         return NextResponse.json({ error: 'Config Missing' }, { status: 500 });
     }
 
     try {
-        const client = new PVAPinsClient(PVAPINS_API_KEY);
+        const client = new SMSPoolClient(SMSPOOL_API_KEY);
         const balance = await client.getBalance();
 
         return NextResponse.json({ balance: balance, currency: 'USD' });

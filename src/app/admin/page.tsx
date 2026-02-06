@@ -34,7 +34,7 @@ export default function AdminDashboard() {
     // System Health
     const [latency, setLatency] = useState(0);
     const [successRate, setSuccessRate] = useState(0);
-    const [pvapinsBalance, setPvapinsBalance] = useState("0.00");
+    const [smsPoolBalance, setSmsPoolBalance] = useState("0.00");
 
     // Fetch real stats
     useEffect(() => {
@@ -51,11 +51,11 @@ export default function AdminDashboard() {
                     setSuccessRate(data.successRate);
                 }
 
-                // Fetch PVAPins Balance
-                const pvaRes = await fetch('/api/admin/balance');
-                const pvaData = await pvaRes.json();
-                if (pvaData.balance !== undefined) {
-                    setPvapinsBalance(pvaData.balance.toFixed(2));
+                // Fetch SMSPool Balance
+                const smsRes = await fetch('/api/admin/balance');
+                const smsData = await smsRes.json();
+                if (smsData.balance !== undefined) {
+                    setSmsPoolBalance(smsData.balance.toFixed(2));
                 }
 
             } catch (e) {
@@ -92,9 +92,9 @@ export default function AdminDashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Total Revenue" value={`$${revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={<FaDollarSign />} trend={revenueTrend} />
+                <StatCard title="Net Profit (All Time)" value={`$${revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={<FaDollarSign />} trend={revenueTrend} />
                 <StatCard title="Active Users" value={activeUsers.toLocaleString()} icon={<FaUser />} trend={userTrend} />
-                <StatCard title="PVAPins Balance" value={`$${pvapinsBalance}`} icon={<div className="font-bold text-xs">PVA</div>} />
+                <StatCard title="SMSPool Balance" value={`$${smsPoolBalance}`} icon={<div className="font-bold text-xs">SMS</div>} />
                 <StatCard title="Active Services" value={activeServicesCount.toString()} icon={<FaServer />} />
             </div>
 

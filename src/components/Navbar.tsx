@@ -72,11 +72,6 @@ export default function Navbar() {
                         </Link3D>
                     )}
                     {isLoggedIn && (
-                        <Link3D href="/proxies" className="text-sm font-bold text-orange-400 hover:text-orange-300 transition-colors uppercase tracking-wide">
-                            Proxies
-                        </Link3D>
-                    )}
-                    {isLoggedIn && (
                         <Link3D href="/dashboard/api" className="text-sm font-bold text-cyan-400 hover:text-cyan-300 transition-colors uppercase tracking-wide">
                             API
                         </Link3D>
@@ -93,9 +88,6 @@ export default function Navbar() {
                         </button>
                     ) : (
                         <>
-                            <Link3D href="/login" className="hidden md:block text-sm font-bold text-white/80 hover:text-white transition-colors uppercase tracking-wide">
-                                Proxies
-                            </Link3D>
                             <Link3D href="/login" className="hidden md:block text-sm font-bold text-white/80 hover:text-white transition-colors uppercase tracking-wide">
                                 Log in
                             </Link3D>
