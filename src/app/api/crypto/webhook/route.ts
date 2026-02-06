@@ -109,15 +109,18 @@ export async function POST(req: NextRequest) {
         const { data: currentUser } = await supabaseAdmin
             .from('users')
             .select('balance')
-            .eq('id', userId)
+            .eq('user_id', userId)
             .single();
 
         const balanceBefore = parseFloat(currentUser?.balance || 0);
         const balanceAfter = balanceBefore + depositAmount;
 
+        // Upsert: create user if not exists, or update balance
         await supabaseAdmin.from('users')
-            .update({ balance: balanceAfter })
-            .eq('id', userId);
+            .upsert({
+                user_id: userId,
+                balance: balanceAfter
+            }, { onConflict: 'user_id' });
 
         // 7. MARK PAYMENT COMPLETE
         await supabaseAdmin.from('pending_crypto_payments')
