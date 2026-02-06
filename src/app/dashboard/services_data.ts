@@ -4,63 +4,63 @@ export const SERVICES_DATA: Service[] = [
     {
         "id": "9999",
         "name": "Service Not Listed",
-        "price": 0.6,
+        "price": 0.75,
         "category": "Other",
         "icon": null
     },
     {
         "id": "bumble",
         "name": "Bumble",
-        "price": 1.25,
+        "price": 0.50,
         "category": "Social",
         "icon": null
     },
     {
         "id": "discord",
         "name": "Discord",
-        "price": 0.8,
+        "price": 0.50,
         "category": "Social",
         "icon": "discord.svg"
     },
     {
         "id": "facebook",
         "name": "Facebook",
-        "price": 1,
+        "price": 1.00,
         "category": "Social",
         "icon": "facebook.svg"
     },
     {
         "id": "linkedin",
         "name": "LinkedIn",
-        "price": 0.8,
+        "price": 0.50,
         "category": "Other",
         "icon": "linkedin.svg"
     },
     {
         "id": "netflix",
         "name": "Netflix",
-        "price": 0.8,
+        "price": 0.50,
         "category": "Other",
         "icon": "netflix.svg"
     },
     {
         "id": "snapchat",
         "name": "Snapchat",
-        "price": 0.8,
+        "price": 0.50,
         "category": "Social",
         "icon": "snapchat.svg"
     },
     {
         "id": "telegram",
         "name": "Telegram",
-        "price": 1.5,
+        "price": 0.60,
         "category": "Social",
         "icon": "telegram.svg"
     },
     {
         "id": "tinder",
         "name": "Tinder",
-        "price": 1.25,
+        "price": 0.50,
         "category": "Social",
         "icon": "tinder.svg"
     },
@@ -74,14 +74,14 @@ export const SERVICES_DATA: Service[] = [
     {
         "id": "whatsapp",
         "name": "WhatsApp",
-        "price": 1.5,
+        "price": 1.50,
         "category": "Social",
         "icon": "whatsapp.svg"
     },
     {
         "id": "google",
-        "name": "Youtube",
-        "price": 1.25,
+        "name": "Google/YouTube",
+        "price": 0.60,
         "category": "Other",
         "icon": "google.svg"
     },
@@ -345,9 +345,9 @@ export const SERVICES_DATA: Service[] = [
         "icon": null
     },
     {
-        "id": "amazonamazonwebservices",
-        "name": "Amazon / Amazon Web Services",
-        "price": 0.6,
+        "id": "amazon",
+        "name": "Amazon",
+        "price": 0.50,
         "category": "Shopping",
         "icon": null
     },
@@ -410,7 +410,7 @@ export const SERVICES_DATA: Service[] = [
     {
         "id": "apple",
         "name": "Apple",
-        "price": 0.6,
+        "price": 0.50,
         "category": "Other",
         "icon": null
     },

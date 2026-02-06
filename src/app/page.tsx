@@ -15,18 +15,18 @@ import { SiTether, SiLitecoin } from 'react-icons/si';
 
 export default function Home() {
   const services = [
-    { name: "Tinder", price: "$1.25", icon: <FaFire /> },
-    { name: "Telegram", price: "$1.50", icon: <FaTelegramPlane /> },
+    { name: "Tinder", price: "$0.50", icon: <FaFire /> },
+    { name: "Telegram", price: "$0.60", icon: <FaTelegramPlane /> },
     { name: "WhatsApp", price: "$1.50", icon: <FaWhatsapp /> },
-    { name: "Google / Gmail", price: "$1.25", icon: <FaGoogle /> },
+    { name: "Google / Gmail", price: "$0.60", icon: <FaGoogle /> },
     { name: "Facebook", price: "$1.00", icon: <FaFacebookF /> },
-    { name: "Instagram", price: "$0.85", icon: <FaInstagram /> },
-    { name: "OpenAI / ChatGPT", price: "$0.80", icon: <FaRobot /> },
-    { name: "Discord", price: "$0.80", icon: <FaDiscord /> },
+    { name: "Instagram", price: "$0.50", icon: <FaInstagram /> },
+    { name: "OpenAI / ChatGPT", price: "$0.50", icon: <FaRobot /> },
+    { name: "Discord", price: "$0.50", icon: <FaDiscord /> },
     { name: "Uber", price: "$0.60", icon: <FaUber /> },
-    { name: "Twitter / X", price: "$0.60", icon: <FaTwitter /> },
-    { name: "Snapchat", price: "$0.80", icon: <FaSnapchatGhost /> },
-    { name: "TikTok", price: "$0.60", icon: <FaTiktok /> },
+    { name: "Twitter / X", price: "$0.50", icon: <FaTwitter /> },
+    { name: "Snapchat", price: "$0.50", icon: <FaSnapchatGhost /> },
+    { name: "TikTok", price: "$0.50", icon: <FaTiktok /> },
   ];
 
   const faqs = [
