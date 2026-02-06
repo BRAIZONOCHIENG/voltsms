@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { PVAPinsClient } from '@/lib/providers/PVAPinsClient';
+import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,9 +8,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-const PVAPINS_API_KEY = process.env.PVAPINS_API_KEY!;
-
-
+const SMSPOOL_API_KEY = process.env.SMSPOOL_API_KEY!;
 
 export async function POST(req: Request) {
     try {
@@ -23,21 +21,20 @@ export async function POST(req: Request) {
         const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
         if (authError || !user) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-        if (!PVAPINS_API_KEY) {
-            console.error("PVAPins Config Missing");
+        if (!SMSPOOL_API_KEY) {
+            console.error("SMSPool Config Missing");
             return NextResponse.json({ error: 'Server Config Error' }, { status: 500 });
         }
 
         // 2. Client
-        const client = new PVAPinsClient(PVAPINS_API_KEY);
-
+        const client = new SMSPoolClient(SMSPOOL_API_KEY);
 
         // 3. Check SMS Status
         let smsCode: string | null = null;
         try {
             smsCode = await client.getSMS(orderId);
         } catch (e: any) {
-            console.error("PVAPins Check Error:", e);
+            console.error("SMSPool Check Error:", e);
             // Keep pending if API errors (don't fail user yet)
             return NextResponse.json({ status: 'pending' });
         }
@@ -50,7 +47,7 @@ export async function POST(req: Request) {
                 .update({
                     status: 'completed',
                     sms_code: smsCode,
-                    full_sms: `Your code is ${smsCode}` // PVAPins usually just returns code or short text
+                    full_sms: `Your code is ${smsCode}`
                 })
                 .eq('order_id', orderId)
                 .eq('user_id', user.id);

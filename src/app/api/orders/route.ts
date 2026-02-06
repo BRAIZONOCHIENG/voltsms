@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { PVAPinsClient } from '@/lib/providers/PVAPinsClient';
+import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -20,27 +20,26 @@ export async function GET(req: NextRequest) {
     const { data: dbOrders, error: ordersError } = await supabaseAdmin
         .from('orders')
         .select('*')
-        .eq('user_id', user.id); // Renamed to dbOrders to avoid confusion
+        .eq('user_id', user.id);
 
-    // Active Status Sync (The "Seamless" Fix)
-    // We actively check pending orders against PVAPins before returning
+    // Active Status Sync - Check pending orders against SMSPool
     if (dbOrders) {
         const pendingOrders = dbOrders.filter((o: any) => o.status === 'pending');
         if (pendingOrders.length > 0) {
-            const PVAPINS_API_KEY = process.env.PVAPINS_API_KEY!;
-            if (PVAPINS_API_KEY) {
-                const pvaClient = new PVAPinsClient(PVAPINS_API_KEY);
+            const SMSPOOL_API_KEY = process.env.SMSPOOL_API_KEY!;
+            if (SMSPOOL_API_KEY) {
+                const smsClient = new SMSPoolClient(SMSPOOL_API_KEY);
                 await Promise.all(pendingOrders.map(async (order: any) => {
                     try {
                         // Check for Code
-                        const code = await pvaClient.getSMS(order.order_id);
-                        if (code && typeof code === 'string' && !code.includes('WAIT')) {
+                        const code = await smsClient.getSMS(order.order_id);
+                        if (code && typeof code === 'string') {
                             // Success!
                             await supabaseAdmin.from('orders').update({
                                 status: 'completed',
                                 code: code
                             }).eq('order_id', order.order_id);
-                            order.status = 'completed'; // Update in memory for response
+                            order.status = 'completed';
                             order.code = code;
                         }
                     } catch (e) {

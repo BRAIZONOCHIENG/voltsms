@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { PVAPinsClient } from '@/lib/providers/PVAPinsClient';
+import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-const PVAPINS_API_KEY = process.env.PVAPINS_API_KEY!;
-
-
+const SMSPOOL_API_KEY = process.env.SMSPOOL_API_KEY!;
 
 export async function POST(req: Request) {
     try {
@@ -35,8 +33,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Already cancelled' });
         }
 
-        // 3. Cancel on PVAPins
-        const client = new PVAPinsClient(PVAPINS_API_KEY);
+        // 3. Cancel on SMSPool
+        const client = new SMSPoolClient(SMSPOOL_API_KEY);
 
         const cancelled = await client.cancelOrder(orderId);
 
@@ -54,8 +52,7 @@ export async function POST(req: Request) {
 
             return NextResponse.json({ success: true, new_balance: newBalance });
         } else {
-            // If PVAPins says "Cannot cancel" (maybe it expired or already received SMS?), we should handle that.
-            // But for now, if it fails, we assume it's un-cancellable.
+            // If SMSPool says "Cannot cancel" (maybe it expired or already received SMS?), we should handle that.
             return NextResponse.json({ error: 'Could not cancel order. It may be expired or already completed.' }, { status: 400 });
         }
 
