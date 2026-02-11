@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
 
 // 1. Blocked User Agents (Scrapers/Bots)
 const BLOCKED_USER_AGENTS = [
@@ -23,7 +24,7 @@ const rateLimit = new Map();
 const RATE_LIMIT_WINDOW_MS = 10 * 1000; // 10 seconds
 const MAX_REQUESTS_PER_WINDOW = 50; // 50 requests per 10s (~5 req/s burst)
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     let ip = (request as any).ip ?? request.headers.get('x-forwarded-for') ?? '127.0.0.1';
 
     // Handle multiple IPs in x-forwarded-for
@@ -100,7 +101,8 @@ export function middleware(request: NextRequest) {
         }
     }
 
-    return NextResponse.next();
+    // 3. Update Supabase Session (replaces NextResponse.next())
+    return await updateSession(request);
 }
 
 export const config = {
