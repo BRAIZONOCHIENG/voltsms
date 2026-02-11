@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
+import { SMSPoolClient } from '../../../../lib/providers/SMSPoolClient';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,3 +1,5 @@
+import dns from 'dns';
+if (dns.setDefaultResultOrder) dns.setDefaultResultOrder('ipv4first');
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 /*
@@ -11,6 +13,7 @@ import { createClient } from '@supabase/supabase-js';
  * -----------------------------------------------------------------------------
  */
 import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
+import { GrizzlySMSClient } from '@/lib/providers/GrizzlySMSClient';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -40,13 +43,20 @@ export async function POST(req: Request) {
         if (orderError || !order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
 
         if (order.status === 'cancelled' || order.status === 'refunded') {
-            return NextResponse.json({ message: 'Already cancelled' });
+            return NextResponse.json({ error: 'Order is already cancelled or refunded' });
         }
 
         // 3. Cancel on SMSPool
-        const client = new SMSPoolClient(SMSPOOL_API_KEY);
+        // 3. Cancel on Provider
+        const provider = order.provider || 'smspool';
+        let cancelled = false;
 
-        const cancelled = await client.cancelOrder(orderId);
+        if (provider === 'grizzly') {
+            cancelled = await GrizzlySMSClient.setStatus(orderId, '8'); // 8 = Cancel
+        } else {
+            const client = new SMSPoolClient(SMSPOOL_API_KEY);
+            cancelled = await client.cancelOrder(orderId);
+        }
 
         if (cancelled) {
             // 4. Refund Logic

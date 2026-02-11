@@ -1,3 +1,5 @@
+import dns from 'dns';
+if (dns.setDefaultResultOrder) dns.setDefaultResultOrder('ipv4first');
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 

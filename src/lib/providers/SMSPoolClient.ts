@@ -35,16 +35,26 @@ export class SMSPoolClient implements SMSProvider {
         }
     }
 
-    async purchaseNumber(serviceId: string, countryId: string): Promise<SMSOrder> {
+    async purchaseNumber(serviceId: string, countryId: string, pricingOption?: string, maxPrice?: number): Promise<SMSOrder> {
         // SMSPool uses numeric IDs for country and service
         // Endpoint: /purchase/sms
-        // Params: key, country, service
+        // Params: key, country, service, pricing_option, max_price
 
-        const params = new URLSearchParams({
+        const queryParams: Record<string, string> = {
             key: this.apiKey,
             country: countryId,
             service: serviceId
-        });
+        };
+
+        if (pricingOption) {
+            queryParams['pricing_option'] = pricingOption;
+        }
+
+        if (maxPrice !== undefined) {
+            queryParams['max_price'] = maxPrice.toString();
+        }
+
+        const params = new URLSearchParams(queryParams);
 
         console.log(`[SMSPool] Purchasing: country=${countryId}, service=${serviceId}`);
 
@@ -97,7 +107,23 @@ export class SMSPoolClient implements SMSProvider {
                 method: 'POST'
             });
             const data = await res.json();
-            return data.success === 1 || data.message?.toLowerCase().includes('success');
+
+            if (data.success === 1 || data.message?.toLowerCase().includes('success')) {
+                return true;
+            }
+
+            // IDEMPOTENCY FIX:
+            // If SMSPool says "Order not found", "expired", or "already cancelled", 
+            // it means the order is dead on their end. We should return TRUE 
+            // so our system processes the local refund/cancellation to stay in sync.
+            const msg = (data.message || data.error || JSON.stringify(data)).toLowerCase();
+            if (msg.includes('found') || msg.includes('expired') || msg.includes('cancel')) {
+                console.log(`[SMSPool] Order ${orderId} already dead (${msg}). Treating as cancelled.`);
+                return true;
+            }
+
+            console.error(`[SMSPool] Cancel failed for order ${orderId}:`, data);
+            return false;
         } catch (e) {
             console.error('Failed to cancel SMSPool order', e);
             return false;

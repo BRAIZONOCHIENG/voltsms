@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server';
 import https from 'node:https';
+import dns from 'node:dns';
+
+// Force IPV4
+try {
+    dns.setDefaultResultOrder('ipv4first');
+} catch (e) {
+    console.error("DNS setup failed:", e);
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -94,17 +102,17 @@ export async function POST(req: Request) {
 }
 
 function calculateSellingPrice(costPrice: number) {
-    // Tier 1: Cheap (< $0.50) -> +$0.40
-    // Tier 2: Expensive (>= $0.50) -> +$0.50
-    // + $0.05 buffer
-    let sellingPrice = 0;
-    if (costPrice < 0.50) {
-        sellingPrice = costPrice + 0.40;
-    } else {
-        sellingPrice = costPrice + 0.50;
-    }
-    sellingPrice += 0.05;
+    // Strategy: 100% Markup (x2.0)
+    // Ensures we profit significantly even on expensive items (e.g. $2.00 -> $4.00)
+    // Floor price: $0.60
 
+    let sellingPrice = costPrice * 2.0;
+
+    if (sellingPrice < 0.60) {
+        sellingPrice = 0.60;
+    }
+
+    // Round to 2 decimals
     return {
         price: parseFloat(sellingPrice.toFixed(2)),
         cost: costPrice

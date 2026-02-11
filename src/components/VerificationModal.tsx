@@ -163,6 +163,27 @@ export default function VerificationModal({ isOpen, onClose, order, onCancel, on
                         </div>
                     </div>
 
+                    {/* High Security Warning */}
+                    {['tinder', 'hinge', 'bumble', 'bank', 'paypal', 'venmo', 'cashapp', 'revolut', 'wise'].some(s => order.service.toLowerCase().includes(s)) && displayStatus !== 'completed' && (
+                        <div className="mx-4 mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex items-start gap-3">
+                            <FaExclamationTriangle className="text-yellow-500 text-lg shrink-0 mt-0.5" />
+                            <div className="text-xs text-yellow-200/80 leading-relaxed">
+                                <strong className="text-yellow-400 block mb-1">High Security Service Detected</strong>
+                                This service has strict filters. If the code does not arrive within 2 minutes, please cancel and try a different country. You are not charged for failed attempts.
+                            </div>
+                        </div>
+                    )}
+
+                    {/* General Waiting Notice (Requested by User) */}
+                    {displayStatus !== 'completed' && (
+                        <div className="mx-4 mt-2 p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-center gap-3">
+                            <FaSpinner className="text-blue-400 animate-spin shrink-0" />
+                            <div className="text-xs text-blue-200/70">
+                                <strong>Please Wait:</strong> Codes usually arrive instantly, but can sometimes take up to 3 minutes depending on the network.
+                            </div>
+                        </div>
+                    )}
+
                     {/* Main Content */}
                     <div className="p-6 space-y-6">
 

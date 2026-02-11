@@ -48,7 +48,7 @@ export default function Navbar() {
             style={{ backdropFilter: 'blur(64px) saturate(180%)', WebkitBackdropFilter: 'blur(64px) saturate(180%)' }}
         >
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                <Link3D href="/" className="group">
+                <Link3D href="/" className="group -ml-3">
                     <span className="flex items-center gap-1">
                         <div className="relative w-10 h-10 flex items-center justify-center">
                             <NextImage

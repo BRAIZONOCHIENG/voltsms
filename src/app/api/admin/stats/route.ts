@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
         // For larger scale, we would use Supabase .rpc() or aggregate queries, but for now fetching is fine.
         const { data: allOrders } = await supabaseAdmin
             .from('orders')
-            .select('cost, provider_cost, timestamp, status')
+            .select('cost, provider_cost, timestamp, status, service')
             .eq('status', 'completed'); // STRICT Filter: Only successful orders count
 
         // Calculate Totals since inception

@@ -1,3 +1,5 @@
+import dns from 'dns';
+if (dns.setDefaultResultOrder) dns.setDefaultResultOrder('ipv4first');
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 /*
@@ -12,6 +14,7 @@ import { createClient } from '@supabase/supabase-js';
  * -----------------------------------------------------------------------------
  */
 import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
+import { GrizzlySMSClient } from '@/lib/providers/GrizzlySMSClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,15 +40,31 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Server Config Error' }, { status: 500 });
         }
 
-        // 2. Client
-        const client = new SMSPoolClient(SMSPOOL_API_KEY);
+        // 2. Determine Provider
+        const { data: orderDetails, error: orderError } = await supabaseAdmin
+            .from('orders')
+            .select('provider')
+            .eq('order_id', orderId)
+            .single();
+
+        const provider = orderDetails?.provider || 'smspool';
 
         // 3. Check SMS Status
         let smsCode: string | null = null;
+
         try {
-            smsCode = await client.getSMS(orderId);
+            if (provider === 'grizzly') {
+                const status = await GrizzlySMSClient.checkStatus(orderId);
+                if (status && status.status === 'COMPLETED') {
+                    smsCode = status.code || null;
+                }
+            } else {
+                // SMSPool
+                const client = new SMSPoolClient(SMSPOOL_API_KEY);
+                smsCode = await client.getSMS(orderId);
+            }
         } catch (e: any) {
-            console.error("SMSPool Check Error:", e);
+            console.error(`${provider} Check Error:`, e);
             // Keep pending if API errors (don't fail user yet)
             return NextResponse.json({ status: 'pending' });
         }

@@ -15,25 +15,27 @@ import { SiTether, SiLitecoin } from 'react-icons/si';
 
 export default function Home() {
   const services = [
-    { name: "Tinder", price: "$0.50", icon: <FaFire /> },
-    { name: "Telegram", price: "$0.60", icon: <FaTelegramPlane /> },
+    { name: "Tinder", price: "$1.50", icon: <FaFire /> },
+    { name: "Telegram", price: "$1.50", icon: <FaTelegramPlane /> },
     { name: "WhatsApp", price: "$1.50", icon: <FaWhatsapp /> },
-    { name: "Google / Gmail", price: "$0.60", icon: <FaGoogle /> },
-    { name: "Facebook", price: "$1.00", icon: <FaFacebookF /> },
-    { name: "Instagram", price: "$0.50", icon: <FaInstagram /> },
-    { name: "OpenAI / ChatGPT", price: "$0.50", icon: <FaRobot /> },
-    { name: "Discord", price: "$0.50", icon: <FaDiscord /> },
-    { name: "Uber", price: "$0.60", icon: <FaUber /> },
-    { name: "Twitter / X", price: "$0.50", icon: <FaTwitter /> },
-    { name: "Snapchat", price: "$0.50", icon: <FaSnapchatGhost /> },
-    { name: "TikTok", price: "$0.50", icon: <FaTiktok /> },
+    { name: "Google / Gmail", price: "$1.50", icon: <FaGoogle /> },
+    { name: "Facebook", price: "$1.50", icon: <FaFacebookF /> },
+    { name: "Instagram", price: "$1.50", icon: <FaInstagram /> },
+    { name: "OpenAI / ChatGPT", price: "$1.50", icon: <FaRobot /> },
+    { name: "Discord", price: "$1.50", icon: <FaDiscord /> },
+    { name: "Uber", price: "$1.50", icon: <FaUber /> },
+    { name: "Twitter / X", price: "$1.50", icon: <FaTwitter /> },
+    { name: "Snapchat", price: "$0.75", icon: <FaSnapchatGhost /> },
+    { name: "TikTok", price: "$1.50", icon: <FaTiktok /> },
   ];
 
   const faqs = [
     { q: "Is this really Non-VoIP?", a: "Yes. We use real SIM cards from physical devices. This means our numbers work on services that block virtual numbers (VoIP) like Tinder, Telegram, and WhatsApp." },
-    { q: "How fast is delivery?", a: "Instant. Our automated system delivers your number immediately after purchase. The SMS code appears in your dashboard within seconds of being sent." },
-    { q: "Do I need to verify my ID?", a: "Never. We respect your privacy. No ID, no KYC, no personal details required. Just sign up and pay with Crypto." },
-    { q: "What if the code doesn't arrive?", a: "You don't pay. If the SMS doesn't arrive within the timeout period (usually 20 mins), the order is automatically cancelled and your credit is refunded instantly." },
+    { q: "How long does the number work?", a: "These are temporary numbers for one-time verification (OTP). The number is active for 15-20 minutes to receive your code. After that, it is closed for security." },
+    { q: "Do you accept Crypto?", a: "Yes, we accept Bitcoin, Litecoin, USDT (Tether), Ethereum, and Monero. Payments are credited automatically after 1 confirmation." },
+    { q: "What if the code doesn't arrive?", a: "You don't pay. If the SMS doesn't arrive within the timeout period, the order is automatically cancelled and your credit is refunded instantly to your balance." },
+    { q: "Can I use the same number twice?", a: "No. For security and privacy, each number is used once for a single verification code and then discarded. If you need another code, simply buy a new number." },
+    { q: "Do I need ID Verification?", a: "Never. We value your privacy. No ID, no KYC, no personal details required. Just sign up and pay with Crypto." },
   ];
 
   const container = {
@@ -58,6 +60,31 @@ export default function Home() {
   return (
     <main className="min-h-screen text-white overflow-x-hidden relative">
       <Navbar />
+
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "VoltSMS",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Web",
+            "offers": {
+              "@type": "Offer",
+              "price": "1.50",
+              "priceCurrency": "USD"
+            },
+            "description": "Instant non-VoIP SMS verification for Tinder, Telegram, WhatsApp, and more. Secure crypto payments.",
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "ratingCount": "1250"
+            }
+          })
+        }}
+      />
 
       {/* Hero Section */}
       <section className="pt-20 pb-12 px-4 relative z-10">
@@ -226,9 +253,10 @@ export default function Home() {
               className="p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-blue-500/30 transition-colors"
             >
               <FaUserSecret className="text-4xl text-blue-500 mb-6" />
-              <h3 className="text-xl font-bold mb-2">Anonymous</h3>
+              <FaUserSecret className="text-4xl text-blue-500 mb-6" />
+              <h3 className="text-xl font-bold mb-2">Secure & Private</h3>
               <p className="text-stone-400 text-sm leading-relaxed">
-                Protect your identity. Use our numbers for temporary verifications without linking your personal phone.
+                Protect your personal data. Use our temporary numbers to verify accounts without exposing your primary phone number.
               </p>
             </motion.div>
           </div>

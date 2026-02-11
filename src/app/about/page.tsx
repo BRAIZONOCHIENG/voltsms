@@ -21,9 +21,9 @@ export default function About() {
 
                         <h3 className="text-white text-xl font-bold mt-8">Why Choose Us?</h3>
                         <ul className="list-disc pl-5 space-y-2">
-                            <li><strong>Uncompromised Quality:</strong> We exclusively utilize real, non-VoIP SIM cards from over 50 countries. This ensures the highest success rates in the industry for bypassing complex verification systems used by major platforms like Tinder, Telegram, and Google.</li>
-                            <li><strong>Absolute Anonymity:</strong> We do not ask for your ID. We do not track your activity. We accept cryptocurrency to ensure your financial data remains private.</li>
-                            <li><strong>State-of-the-Art Technology:</strong> Our platform is built on cutting-edge infrastructure that delivers SMS codes in seconds, not minutes. </li>
+                            <li><strong>Premium Network Quality:</strong> We partner with major telecommunication providers globally to source real, physical SIM cards. This ensures high deliverability rates for services that typically filter out virtual (VoIP) numbers.</li>
+                            <li><strong>Privacy by Design:</strong> Our system is architected to minimize data retention. We do not require identity verification or invasive tracking, allowing you to maintain control over your personal information.</li>
+                            <li><strong>Enterprise-Grade Infrastructure:</strong> Our platform is built for speed and reliability, delivering verification codes in seconds through our direct carrier connections.</li>
                         </ul>
 
                         <h3 className="text-white text-xl font-bold mt-8">Our Commitment</h3>

@@ -69,6 +69,7 @@ export const metadata: Metadata = {
 import Footer from "../components/Footer";
 import { AnimatedBackground } from "../components/AnimatedBackground";
 import { OrganizationSchema, WebSiteSchema } from "../components/JsonLd";
+import { Web3ModalProvider } from "../context/Web3ModalProvider";
 
 export default function RootLayout({
   children,
@@ -81,14 +82,16 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col relative`}
       >
         <AnimatedBackground />
-        <div className="relative z-10 flex flex-col flex-1">
-          {children}
-        </div>
-        <OrganizationSchema />
-        <WebSiteSchema />
-        <div className="relative z-10">
-          <Footer />
-        </div>
+        <Web3ModalProvider>
+          <div className="relative z-10 flex flex-col flex-1">
+            {children}
+          </div>
+          <OrganizationSchema />
+          <WebSiteSchema />
+          <div className="relative z-10">
+            <Footer />
+          </div>
+        </Web3ModalProvider>
       </body>
     </html>
   );

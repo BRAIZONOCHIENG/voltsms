@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.simpleicons.org https://*.paystack.co https://*.paystack.com https://*.paypal.com https://*.paypalobjects.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://cdn.simpleicons.org https: https://api.qrserver.com; font-src 'self' data:; connect-src 'self' https://cdn.simpleicons.org https:; frame-src 'self' https://*.paystack.co https://*.paystack.com https://*.paypal.com;"
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.simpleicons.org https://*.paystack.co https://*.paystack.com https://*.paypal.com https://*.paypalobjects.com https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://cdn.simpleicons.org https: https://api.qrserver.com https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com https://explorer-api.walletconnect.com; font-src 'self' data:; connect-src 'self' https://cdn.simpleicons.org https: wss: https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com https://explorer-api.walletconnect.com https://rpc.walletconnect.com https://api.web3modal.com; frame-src 'self' https://*.paystack.co https://*.paystack.com https://*.paypal.com https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com https://verify.walletconnect.com;"
           }
         ]
       }

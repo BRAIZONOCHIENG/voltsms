@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { PVAPinsClient } from '@/lib/providers/PVAPinsClient';
+import { GrizzlySMSClient } from '@/lib/providers/GrizzlySMSClient';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -54,9 +55,17 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: `Cannot cancel order in '${order.status}' state` }, { status: 400 });
         }
 
-        // Cancel on PVAPins
-        const client = new PVAPinsClient(PVAPINS_API_KEY);
-        const cancelled = await client.cancelOrder(order.order_id);
+        // Cancel based on provider
+        let cancelled = false;
+
+        if (order.provider === 'smspool') {
+            // Status '8' = Cancel
+            cancelled = await GrizzlySMSClient.setStatus(order.order_id, '8');
+        } else {
+            // Fallback to PVAPins (Legacy)
+            const client = new PVAPinsClient(PVAPINS_API_KEY);
+            cancelled = await client.cancelOrder(order.order_id);
+        }
 
         if (cancelled) {
             // Refund
@@ -69,7 +78,7 @@ export async function POST(req: NextRequest) {
 
             return NextResponse.json({ success: true, message: 'Order cancelled and refunded' });
         } else {
-            return NextResponse.json({ error: 'Provider failed to cancel order' }, { status: 400 });
+            return NextResponse.json({ error: 'Failed to cancel order' }, { status: 400 });
         }
 
     } catch (e: any) {

@@ -30,14 +30,24 @@ export async function GET(req: NextRequest) {
         // Update last used
         supabaseAdmin.from('api_keys').update({ last_used_at: new Date() }).eq('key', apiKey).then();
 
+        // Optional: Filter by Country to get specific price
+        const { searchParams } = new URL(req.url);
+        const country = searchParams.get('country');
+
         // Return Services from our local definition (faster than proxying PVAPins every time)
         // We map them to a clean API format
-        const services = SERVICES_DATA.map(s => ({
-            id: s.id,
-            name: s.name,
-            price: s.price,
-            category: s.category
-        }));
+        const services = SERVICES_DATA.map(s => {
+            let price = s.price;
+            if (country && s.prices && s.prices[country]) {
+                price = s.prices[country];
+            }
+            return {
+                id: s.id,
+                name: s.name,
+                price: price,
+                category: s.category
+            };
+        });
 
         return NextResponse.json({ services });
 

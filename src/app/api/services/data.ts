@@ -12,10 +12,9 @@ export interface Service {
 export const HARDCODED_SERVICES: Service[] = [
     // Social Media (Premium)
     { id: 'wa', name: 'WhatsApp', price: 1.50, category: 'Social' },
-    { id: 'tg', name: 'Telegram', price: 1.80, category: 'Social' },
-    { id: 'ig', name: 'Instagram', price: 1.00, category: 'Social' },
-    { id: 'fb', name: 'Facebook', price: 1.00, category: 'Social' },
-    { id: 'tw', name: 'Twitter / X', price: 1.00, category: 'Social' },
+    { id: 'tg', name: 'Telegram', price: 1.50, category: 'Social' },
+    { id: 'ig', name: 'Instagram', price: 1.50, category: 'Social' },
+    { id: 'fb', name: 'Facebook', price: 1.50, category: 'Social' },
     { id: 'ds', name: 'Discord', price: 1.00, category: 'Social' },
     { id: 'lf', name: 'TikTok', price: 1.00, category: 'Social' },
     { id: 'sc', name: 'Snapchat', price: 1.00, category: 'Social' },
@@ -69,7 +68,7 @@ export const HARDCODED_SERVICES: Service[] = [
     { id: 'tw', name: 'Twitch', price: 0.60, category: 'Other' },
 
     // Catch-all ($0.60)
-    { id: 'ot', name: 'Service Not Listed', price: 0.60, category: 'Other' },
+    { id: '9999', name: 'Service Not Listed', price: 1.44, category: 'Other' },
 ];
 
 export const HARDCODED_COUNTRIES = [

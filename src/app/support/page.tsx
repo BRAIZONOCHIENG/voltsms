@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import Navbar from '../../components/Navbar';
 
 export default function Support() {
@@ -34,9 +35,9 @@ export default function Support() {
                     <p className="text-white/70 mb-8 max-w-2xl mx-auto">
                         Need help? Our team is available 24/7 to assist you with verifications, payments, and API integration.
                     </p>
-                    <a href="mailto:support@voltsms.store" className="bg-primary-dark text-white border border-white/20 px-6 py-3 rounded-xl font-bold hover:bg-stone-900 transition-colors">
+                    <Link href="/contact" className="inline-block bg-primary-dark text-white border border-white/20 px-6 py-3 rounded-xl font-bold hover:bg-stone-900 transition-colors">
                         Contact Support
-                    </a>
+                    </Link>
                 </div>
 
             </div>

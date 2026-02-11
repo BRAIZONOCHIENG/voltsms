@@ -125,10 +125,10 @@ export default function Contact() {
                     <div className="mt-12 border-t border-white/10 pt-10">
                         <h3 className="text-xl font-bold text-white mb-4">Business Address</h3>
                         <p className="text-white/60 text-sm">
-                            VoltSMS Digital Ltd.<br />
-                            71-75 Shelton Street<br />
-                            Covent Garden, London<br />
-                            United Kingdom, WC2H 9JQ
+                            VoltSMS Digital Inc.<br />
+                            447 Broadway, 2nd Floor<br />
+                            New York, NY 10013<br />
+                            United States
                         </p>
                     </div>
                 </div>

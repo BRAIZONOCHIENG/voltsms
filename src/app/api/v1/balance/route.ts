@@ -9,10 +9,11 @@ const supabaseAdmin = createClient(
 export async function GET(req: NextRequest) {
     try {
         const authHeader = req.headers.get('Authorization');
-        if (!authHeader || !authHeader.startsWith('Bearer sk_live_')) {
-            return NextResponse.json({ error: 'Unauthorized: Invalid API Key' }, { status: 401 });
+        if (!authHeader || (!authHeader.startsWith('Bearer sk_live_') && !authHeader.startsWith('Bearer vk_'))) {
+            return NextResponse.json({ error: 'Unauthorized: Invalid API Key Format' }, { status: 401 });
         }
         const apiKey = authHeader.replace('Bearer ', '');
+        console.log(`[API Debug] Protocol: ${req.nextUrl.protocol}, Host: ${req.headers.get('host')}, Auth: ${authHeader}`);
 
         // Validate Key
         const { data: keyData, error: keyError } = await supabaseAdmin

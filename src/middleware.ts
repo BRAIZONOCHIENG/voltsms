@@ -41,7 +41,20 @@ export function middleware(request: NextRequest) {
     // Exception: Allow Googlebot for SEO if this was a public site, but user said "not scrapable".
     // We will stick to the list. If it matches a tool, block it.
 
-    if (isBot &&
+    // Exception for internal API routes that need server-to-server access
+    const isInternalApiRoute =
+        request.nextUrl.pathname.startsWith('/api/crypto/voltsplitter') ||
+        request.nextUrl.pathname.startsWith('/api/crypto/auto-forward') ||
+        request.nextUrl.pathname.startsWith('/api/crypto/register-wallet') ||
+        request.nextUrl.pathname.startsWith('/api/crypto/withdraw-profit') ||
+        request.nextUrl.pathname.startsWith('/api/cron') ||
+        request.nextUrl.pathname.startsWith('/api/webhook');
+
+    // Exception: Allow requests with valid API Key format (B2B API access)
+    const hasApiKey = request.headers.get('authorization')?.startsWith('Bearer sk_live_') ||
+        request.headers.get('authorization')?.startsWith('Bearer vk_');
+
+    if (isBot && !isInternalApiRoute && !hasApiKey &&
         !ua.includes('googlebot') &&
         !ua.includes('bingbot') &&
         !ua.includes('duckduckbot') &&
@@ -55,6 +68,7 @@ export function middleware(request: NextRequest) {
             headers: { 'Content-Type': 'application/json' }
         });
     }
+
 
     // --- B. Rate Limiting ---
     // Only rate limit API routes and Page loads, skip static assets for performance

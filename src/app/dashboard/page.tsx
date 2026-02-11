@@ -22,6 +22,7 @@ import { SERVICES_DATA } from './services_data';
 import { supabase } from '../../lib/supabaseClient';
 import RentalSection from '../../components/RentalSection';
 import DepositSection from '../../components/DepositSection';
+import VoltSplitterPayment from '../../components/VoltSplitterPayment';
 import VerificationModal from '../../components/VerificationModal';
 
 interface Order {
@@ -157,6 +158,7 @@ export default function Dashboard() {
 
     const router = useRouter();
     const [userToken, setUserToken] = useState<string | null>(null);
+    const [userId, setUserId] = useState<string>('');
 
     // Derived Lists
     const activeOrders = useMemo(() => orders.filter(o => o.status === 'pending'), [orders]);
@@ -168,6 +170,7 @@ export default function Dashboard() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { router.push('/login'); return; }
             setUserToken(session.access_token);
+            setUserId(session.user.id);
             fetchData(session.access_token);
 
             // Restore pins
@@ -263,13 +266,19 @@ export default function Dashboard() {
         }
     };
 
-    // Price Fetching - DISABLED (Using Hardcoded Data)
+    // Price Fetching
+    // Price Fetching
     useEffect(() => {
         if (!selectedService.id || !selectedCountry.code || selectedService.id === 'custom') {
             setDynamicPrice(null); return;
         }
-        // Instant Price Set
-        setDynamicPrice(selectedService.price);
+
+        // Use specific country price if available, otherwise base price
+        let price = selectedService.price;
+        if (selectedService.prices && selectedService.prices[selectedCountry.code]) {
+            price = selectedService.prices[selectedCountry.code];
+        }
+        setDynamicPrice(price);
     }, [selectedService, selectedCountry]);
 
     const togglePin = (id: string, e: React.MouseEvent) => {
@@ -482,7 +491,7 @@ export default function Dashboard() {
 
                         <div className="px-6 pb-8 pt-2">
                             {actionTab === 'deposit' ? (
-                                <DepositSection userToken={userToken} onDepositSuccess={() => userToken && fetchData(userToken)} />
+                                <VoltSplitterPayment userId={userId} />
                             ) : (
                                 <>
                                     {/* Verification Method Toggle - REMOVED for Non-VoIP focus */}
@@ -492,44 +501,17 @@ export default function Dashboard() {
                                         <RentalSection userToken={userToken} />
                                     ) : (
                                         <>
-                                            {/* Country Selector */}
-                                            <div className="space-y-2 relative z-20" ref={countryDropdownRef}>
-                                                <label className="text-xs font-semibold uppercase text-stone-400 tracking-wider ml-1">Select Country</label>
-                                                <button onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)} className="w-full h-[52px] px-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between hover:bg-white/10 transition-all">
-                                                    <div className="flex items-center gap-3"><span className="text-2xl">{selectedCountry.flag}</span><span className="font-medium">{selectedCountry.name}</span></div>
-                                                    <FaChevronDown />
-                                                </button>
-                                                <AnimatePresence>
-                                                    {isCountryDropdownOpen && (
-                                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl max-h-[400px] z-50 flex flex-col shadow-2xl">
-                                                            <div className="p-3 border-b border-white/10 sticky top-0 bg-[#1a1a1a] z-10">
-                                                                <FaSearch className="absolute left-6 top-6 text-stone-500" />
-                                                                <input autoFocus type="text" placeholder="Search..." value={countrySearchTerm} onChange={e => setCountrySearchTerm(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-white" />
-                                                            </div>
-                                                            <div className="overflow-y-auto flex-1">
-                                                                {(countrySearchTerm ? COUNTRIES.filter(c => c.name.toLowerCase().includes(countrySearchTerm.toLowerCase())) : COUNTRIES).map(c => (
-                                                                    <button key={c.code} onClick={() => { setSelectedCountry(c); setIsCountryDropdownOpen(false); }} className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 text-left">
-                                                                        <span className="text-2xl">{c.flag}</span><span className="text-white">{c.name}</span>
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-                                                {isCountryDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsCountryDropdownOpen(false)} />}
-                                            </div>
-
-                                            {/* Service Selector */}
-                                            <div className="space-y-2 relative z-10 mt-4">
+                                            {/* Service Selector (MOVED UP - User Request) */}
+                                            <div className="space-y-2 relative z-20 mt-2">
                                                 <label className="text-xs font-semibold uppercase text-stone-400 tracking-wider ml-1">Select Service</label>
                                                 <div className="relative" ref={dropdownRef}>
                                                     <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 flex items-center justify-between hover:bg-white/10 text-left">
                                                         <div>
                                                             <div className="font-bold text-white">{selectedService.name}</div>
-                                                            <div className="text-xs text-stone-400">{selectedService.id === '' ? 'Browse catalog' : 'Instant Delivery'}</div>
+                                                            <div className="text-xs text-stone-400">{selectedService.id === '' ? 'Select a service first' : 'Instant Delivery'}</div>
                                                         </div>
                                                         <div className="flex items-center gap-3">
-                                                            {selectedService.id && <span className="bg-white/10 px-2 py-1 rounded text-[var(--color-accent)] font-mono">${(verificationMethod === 'voice' ? 2.20 : (dynamicPrice || selectedService.price)).toFixed(2)}</span>}
+                                                            {selectedService.id && <span className="bg-white/10 px-2 py-1 rounded text-[var(--color-accent)] font-mono">${(verificationMethod === 'voice' ? 2.50 : (selectedService.prices?.[selectedCountry.code] || selectedService.price)).toFixed(2)}</span>}
                                                             <FaChevronDown />
                                                         </div>
                                                     </button>
@@ -541,13 +523,87 @@ export default function Dashboard() {
                                                             </div>
                                                             <div className="h-[300px]">
                                                                 <List height={300} width="100%" itemCount={sortedServices.length} itemSize={60}>
-                                                                    {({ index, style }) => <ServiceRow data={{ items: sortedServices, onSelect: (s) => { setSelectedService(s); setDynamicPrice(s.price); setIsDropdownOpen(false); }, selectedId: selectedService.id, verificationMethod, pinnedServices, togglePin }} index={index} style={style} />}
+                                                                    {({ index, style }) => <ServiceRow data={{
+                                                                        items: sortedServices, onSelect: (s) => {
+                                                                            setSelectedService(s);
+                                                                            setIsDropdownOpen(false);
+                                                                            // Auto-select first available country if current is invalid
+                                                                            if (s.prices && !s.prices[selectedCountry.code]) {
+                                                                                const firstAvailCode = Object.keys(s.prices)[0];
+                                                                                const firstAvail = COUNTRIES.find(c => c.code === firstAvailCode);
+                                                                                if (firstAvail) setSelectedCountry(firstAvail);
+                                                                                else setSelectedCountry(COUNTRIES[0]); // Fallback
+                                                                            }
+                                                                        }, selectedId: selectedService.id, verificationMethod, pinnedServices, togglePin
+                                                                    }} index={index} style={style} />}
                                                                 </List>
                                                             </div>
                                                         </div>
                                                     )}
                                                 </div>
                                                 {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />}
+                                            </div>
+
+                                            {/* Country Selector (MOVED DOWN) */}
+                                            <div className="space-y-2 relative z-10 mt-4" ref={countryDropdownRef}>
+                                                <label className="text-xs font-semibold uppercase text-stone-400 tracking-wider ml-1">Select Country</label>
+                                                <button
+                                                    onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                                                    disabled={!selectedService.id}
+                                                    className={`w-full h-[52px] px-4 rounded-xl border flex items-center justify-between transition-all ${!selectedService.id ? 'bg-white/5 border-white/5 opacity-50 cursor-not-allowed' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-2xl">{selectedCountry.flag}</span>
+                                                        <span className="font-medium">{selectedCountry.name}</span>
+                                                        {selectedService.id && selectedService.prices && selectedService.prices[selectedCountry.code] && (
+                                                            <span className="ml-2 text-xs bg-green-900/40 text-green-400 px-2 py-0.5 rounded font-mono">
+                                                                ${selectedService.prices[selectedCountry.code].toFixed(2)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <FaChevronDown />
+                                                </button>
+                                                <AnimatePresence>
+                                                    {isCountryDropdownOpen && (
+                                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl max-h-[400px] z-50 flex flex-col shadow-2xl">
+                                                            <div className="p-3 border-b border-white/10 sticky top-0 bg-[#1a1a1a] z-10">
+                                                                <FaSearch className="absolute left-6 top-6 text-stone-500" />
+                                                                <input autoFocus type="text" placeholder="Search..." value={countrySearchTerm} onChange={e => setCountrySearchTerm(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-white" />
+                                                            </div>
+                                                            <div className="overflow-y-auto flex-1">
+                                                                {(() => {
+                                                                    // Filter countries based on Service Availability
+                                                                    let availableList = COUNTRIES;
+                                                                    if (selectedService.id && selectedService.prices && Object.keys(selectedService.prices).length > 0) {
+                                                                        availableList = COUNTRIES.filter(c => selectedService.prices![c.code] !== undefined);
+                                                                    }
+
+                                                                    // Filter by search term
+                                                                    if (countrySearchTerm) {
+                                                                        availableList = availableList.filter(c => c.name.toLowerCase().includes(countrySearchTerm.toLowerCase()));
+                                                                    }
+
+                                                                    if (availableList.length === 0) return <div className="p-4 text-center text-stone-500 text-sm">No countries available for this service.</div>;
+
+                                                                    return availableList.map(c => (
+                                                                        <button key={c.code} onClick={() => { setSelectedCountry(c); setIsCountryDropdownOpen(false); }} className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 text-left group">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <span className="text-2xl">{c.flag}</span>
+                                                                                <span className="text-white group-hover:text-[var(--color-primary)] transition-colors">{c.name}</span>
+                                                                            </div>
+                                                                            {selectedService.id && selectedService.prices && selectedService.prices[c.code] && (
+                                                                                <span className="text-sm font-bold text-stone-400 group-hover:text-white">
+                                                                                    ${selectedService.prices[c.code].toFixed(2)}
+                                                                                </span>
+                                                                            )}
+                                                                        </button>
+                                                                    ));
+                                                                })()}
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                                {isCountryDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsCountryDropdownOpen(false)} />}
                                             </div>
 
                                             {/* Buy Button */}
@@ -557,7 +613,7 @@ export default function Dashboard() {
                                                 className="w-full mt-6 py-4 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white font-black text-lg shadow-lg hover:shadow-purple-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                             >
                                                 {loading ? <span className="animate-spin">⏳</span> : <FaShoppingCart />}
-                                                {loading ? 'Processing...' : `Purchase ${selectedService.name} ($${(verificationMethod === 'voice' ? 2.20 : (dynamicPrice || selectedService.price)).toFixed(2)})`}
+                                                {loading ? 'Processing...' : `Purchase ${selectedService.name} - ${selectedCountry.name} ($${(verificationMethod === 'voice' ? 2.50 : (selectedService.prices?.[selectedCountry.code] || selectedService.price)).toFixed(2)})`}
                                             </button>
                                             {msg && <div className={`mt-4 p-3 rounded-xl text-center text-sm font-bold ${msg.includes('Error') ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>{msg}</div>}
                                         </>

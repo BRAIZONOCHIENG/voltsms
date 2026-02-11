@@ -2,8 +2,10 @@ export interface Service {
     id: string;
     name: string;
     price: number;
+    prices?: Record<string, number>;
     category: string;
     icon?: string | null;
+    smspool_id?: number;
 }
 
 // Map service IDs to Categories based on keywords (fallback)

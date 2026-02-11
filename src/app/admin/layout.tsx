@@ -12,6 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const navItems = [
         { name: 'Dashboard', path: '/admin', icon: <FaChartLine /> },
+        { name: 'Profit Withdrawal', path: '/admin/crypto', icon: <FaCreditCard /> },
         { name: 'Blog Posts', path: '/admin/blog', icon: <FaNewspaper /> },
         { name: 'APIs', path: '/admin/apis', icon: <FaServer /> },
         { name: 'Settings', path: '/admin/settings', icon: <FaCog /> },

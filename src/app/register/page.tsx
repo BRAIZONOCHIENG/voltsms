@@ -1,9 +1,10 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
 
 import { supabase } from '../../lib/supabaseClient';
 
@@ -35,22 +36,72 @@ export default function Register() {
             });
 
             if (error) {
-                setError(error.message);
+                // Handle "User already registered" error
+                if (error.message.includes('User already registered') || error.status === 400 || error.status === 422) {
+                    setError('Account already exists with this email. Please log in.');
+                } else {
+                    setError(error.message);
+                }
                 return;
             }
 
-            // Check for duplicate email (Supabase generic success for existing users)
-            if (data.user && data.user.identities && data.user.identities.length === 0) {
-                setError('Email already registered. Please log in.');
-                return;
-            }
-
-            // User registered
-            if (data.user) {
+            // Check if user exists but returned success (Supabase behavior for disabled email enumeration)
+            // If identifying data is returned but sessions are null, it often means unverified or existing path
+            if (data.user && !data.session) {
+                // If the user identity is empty, it might mean they signed up with OAuth before
+                if (data.user.identities && data.user.identities.length === 0) {
+                    setError('Account already exists. Please log in with Google or your password.');
+                    return;
+                }
+                setRegistrationSuccess(true);
+            } else if (data.user && data.session) {
+                // Auto-login success case (shouldn't happen with email confirm enabled, but safely handled)
                 setRegistrationSuccess(true);
             }
         } catch (err) {
             setError('An unexpected error occurred');
+        }
+    };
+
+    const [resendCooldown, setResendCooldown] = useState(0);
+    const [resendLoading, setResendLoading] = useState(false);
+    const [resendMessage, setResendMessage] = useState('');
+
+    // Timer effect
+
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (resendCooldown > 0) {
+            interval = setInterval(() => {
+                setResendCooldown((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [resendCooldown]);
+
+    const handleResend = async () => {
+        if (resendCooldown > 0) return;
+        setResendLoading(true);
+        setResendMessage('');
+
+        try {
+            const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email: email,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/login?verified=true`,
+                }
+            });
+
+            if (error) throw error;
+
+            setResendMessage('Verification email resent successfully!');
+            setResendCooldown(60); // 60 seconds cooldown
+        } catch (err: any) {
+            setResendMessage(err.message || 'Failed to resend email.');
+        } finally {
+            setResendLoading(false);
         }
     };
 
@@ -70,9 +121,26 @@ export default function Register() {
                             We've sent a verification link to <span className="font-bold text-white">{email}</span>.
                             Please click the link in the email to activate your account.
                         </p>
-                        <div className="bg-white/5 rounded-xl p-4 text-sm text-white/50 border border-white/10">
+
+                        <div className="bg-white/5 rounded-xl p-4 text-sm text-white/50 border border-white/10 mb-6">
+                            <p>Link expires in 24 hours.</p>
                             <p>Once activated, you will be redirected to the login page.</p>
                         </div>
+
+                        {resendMessage && (
+                            <p className={`text-sm mb-4 ${resendMessage.includes('Failed') ? 'text-red-300' : 'text-green-300'}`}>
+                                {resendMessage}
+                            </p>
+                        )}
+
+                        <button
+                            onClick={handleResend}
+                            disabled={resendCooldown > 0 || resendLoading}
+                            className="text-sm font-semibold text-[var(--color-primary)] hover:text-white transition-colors disabled:text-white/30 disabled:cursor-not-allowed"
+                        >
+                            {resendLoading ? 'Sending...' : resendCooldown > 0 ? `Resend Email (${resendCooldown}s)` : 'Resend Verification Email'}
+                        </button>
+
                         <p className="mt-8 text-sm text-white/40">
                             Didn't receive it? Check your spam folder.
                         </p>
@@ -99,6 +167,14 @@ export default function Register() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
+                        <GoogleSignInButton />
+
+                        <div className="relative flex py-2 items-center">
+                            <div className="flex-grow border-t border-white/10"></div>
+                            <span className="flex-shrink-0 mx-4 text-white/40 text-sm">Or with email</span>
+                            <div className="flex-grow border-t border-white/10"></div>
+                        </div>
+
                         <div>
                             <label className="block text-xs font-semibold mb-2 text-white/80 uppercase tracking-wide">Email Address</label>
                             <input
@@ -147,7 +223,7 @@ export default function Register() {
 
 
 
-                        <button type="submit" className="w-full bg-white text-black py-4 rounded-xl font-bold text-lg hover:bg-stone-200 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                        <button type="submit" className="w-full bg-[var(--color-primary)] text-white py-4 rounded-xl font-bold text-lg hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5 transition-all">
                             Start Now
                         </button>
                     </form>

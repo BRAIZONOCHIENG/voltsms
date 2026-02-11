@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { GrizzlySMSClient } from '@/lib/providers/GrizzlySMSClient';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,11 +51,36 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         // OR we duplicate the sync check here. 
         // Let's implement active check if pending. 
 
-        /* 
         if (order.status === 'pending') {
-             // Active check logic... (omitted for brevity unless requested, can add later)
+            // Active check logic to give user real-time result
+            if (order.provider === 'smspool') {
+                const statusResult = await GrizzlySMSClient.checkStatus(order.order_id);
+
+                if (statusResult) {
+                    if (statusResult.status === 'COMPLETED' && statusResult.code) {
+                        // Update DB
+                        await supabaseAdmin.from('orders').update({
+                            status: 'completed',
+                            code: statusResult.code
+                        }).eq('order_id', id);
+
+                        // Update local object to return fresh data
+                        order.status = 'completed';
+                        order.code = statusResult.code;
+                    } else if (statusResult.status === 'CANCELED') {
+                        // Update DB & Refund
+                        const refundAmount = Number(order.cost);
+                        await supabaseAdmin.from('orders').update({ status: 'cancelled' }).eq('order_id', id);
+                        const { data: user } = await supabaseAdmin.from('users').select('balance').eq('user_id', keyData.user_id).single();
+                        if (user) {
+                            await supabaseAdmin.from('users').update({ balance: user.balance + refundAmount }).eq('user_id', keyData.user_id);
+                        }
+
+                        order.status = 'cancelled';
+                    }
+                }
+            }
         }
-        */
 
         return NextResponse.json({
             id: order.order_id,

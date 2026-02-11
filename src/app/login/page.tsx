@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
 import { supabase } from '../../lib/supabaseClient';
 
 function LoginContent() {
@@ -63,6 +64,14 @@ function LoginContent() {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
+                    <GoogleSignInButton />
+
+                    <div className="relative flex py-2 items-center">
+                        <div className="flex-grow border-t border-white/10"></div>
+                        <span className="flex-shrink-0 mx-4 text-white/40 text-sm">Or with email</span>
+                        <div className="flex-grow border-t border-white/10"></div>
+                    </div>
+
                     <div>
                         <label className="block text-xs font-semibold mb-2 text-white/80 uppercase tracking-wide">Email Address</label>
                         <input
@@ -103,7 +112,7 @@ function LoginContent() {
                             Forgot Password?
                         </Link>
                     </div>
-                    <button type="submit" className="w-full bg-white text-black py-4 rounded-xl font-bold text-lg hover:bg-stone-200 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                    <button type="submit" className="w-full bg-[var(--color-primary)] text-white py-4 rounded-xl font-bold text-lg hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5 transition-all">
                         {loading ? 'Logging in...' : 'Log In'}
                     </button>
                 </form>

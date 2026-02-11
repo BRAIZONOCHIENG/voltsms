@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { PVAPinsClient } from '@/lib/providers/PVAPinsClient';
+import { GrizzlySMSClient } from '@/lib/providers/GrizzlySMSClient';
 import { SERVICES_DATA } from '@/app/dashboard/services_data';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-const PVAPINS_API_KEY = process.env.PVAPINS_API_KEY!;
+
+// We use GrizzlyClient but it is internally mapped to SMSPool now
+// Static class usage
 
 export async function POST(req: NextRequest) {
     try {
         // 1. Auth & Validation
         const authHeader = req.headers.get('Authorization');
-        if (!authHeader || !authHeader.startsWith('Bearer sk_live_')) {
-            return NextResponse.json({ error: 'Unauthorized: Invalid API Key' }, { status: 401 });
+        if (!authHeader || (!authHeader.startsWith('Bearer sk_live_') && !authHeader.startsWith('Bearer vk_'))) {
+            return NextResponse.json({ error: 'Unauthorized: Invalid API Key Format' }, { status: 401 });
         }
         const apiKey = authHeader.replace('Bearer ', '');
 
@@ -39,12 +41,22 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing parameters: service, country' }, { status: 400 });
         }
 
-        // 2. Determine Price (Use local data or fetch dynamic if implemented)
-        // For V1, we use SERVICES_DATA standard price.
+        // 2. Validate Service & Price
+        // Find service by ID or Name
         const serviceInfo = SERVICES_DATA.find(s => s.id === service || s.name.toLowerCase() === service.toLowerCase());
-        const serviceId = serviceInfo ? serviceInfo.id : service; // Use ID if found, else pass raw
-        // Fallback price if custom service
-        const price = serviceInfo ? serviceInfo.price : 0.80;
+
+        if (!serviceInfo) {
+            return NextResponse.json({ error: 'Invalid service ID or name' }, { status: 400 });
+        }
+
+        const serviceId = serviceInfo.id;
+        const serviceName = serviceInfo.name;
+
+        // Determine Price: Use country specific if available, else base
+        let price = serviceInfo.price;
+        if (serviceInfo.prices && serviceInfo.prices[country]) {
+            price = serviceInfo.prices[country];
+        }
 
         // 3. Balance Check
         const { data: profile } = await supabaseAdmin
@@ -58,57 +70,72 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Insufficient balance' }, { status: 402 });
         }
 
-        // 4. Purchase Logic
-
-        // Deduct Balance First
+        // 4. Purchase Logic (Deduct First)
         const { error: deductError } = await supabaseAdmin
             .from('users')
             .update({ balance: currentBalance - price })
             .eq('user_id', keyData.user_id);
 
-        if (deductError) throw new Error('Balance update failed');
-
-        // Call Provider
-        const pvaClient = new PVAPinsClient(PVAPINS_API_KEY);
-        let order;
-        try {
-            order = await pvaClient.purchaseNumber(serviceId, country);
-        } catch (providerError: any) {
-            // Refund on failure
-            await supabaseAdmin.from('users').update({ balance: currentBalance }).eq('user_id', keyData.user_id);
-            return NextResponse.json({ error: 'Service unavailable or provider error' }, { status: 503 });
+        if (deductError) {
+            return NextResponse.json({ error: 'Balance update failed' }, { status: 500 });
         }
 
-        // Store Order
+        // 5. Call Provider
+        let order;
         try {
-            await supabaseAdmin.from('orders').insert({
-                user_id: keyData.user_id,
-                order_id: order.orderId,
-                service: serviceInfo ? serviceInfo.name : serviceId,
-                phone: order.phoneNumber,
-                cost: price,
-                provider_cost: order.cost,
-                status: 'pending',
-                provider: 'pvapins'
-            });
-        } catch (dbError) {
-            console.error('API Order DB insert failed', dbError);
-            // Refund
+            // Mapping handle by client internally now
+            const result = await GrizzlySMSClient.purchaseNumber(serviceId, country);
+            if (result) {
+                order = {
+                    orderId: result.order_id,
+                    phone: result.number,
+                    price: result.price
+                };
+            }
+        } catch (providerError: any) {
+            console.error('API Provider Error:', providerError);
+            // Refund on failure
             await supabaseAdmin.from('users').update({ balance: currentBalance }).eq('user_id', keyData.user_id);
-            return NextResponse.json({ error: 'Transaction processing failed' }, { status: 500 });
+            return NextResponse.json({ error: 'Service temporarily unavailable. Please try again.' }, { status: 503 });
+        }
+
+        if (!order || !order.orderId || !order.phone) {
+            // Refund on invalid response
+            await supabaseAdmin.from('users').update({ balance: currentBalance }).eq('user_id', keyData.user_id);
+            return NextResponse.json({ error: 'Order processing failed' }, { status: 503 });
+        }
+
+        // 6. Store Order
+        const { error: dbError } = await supabaseAdmin.from('orders').insert({
+            user_id: keyData.user_id,
+            order_id: order.orderId,
+            service: serviceName,
+            phone: order.phone,
+            cost: price,
+            provider_cost: 0, // We hide cost in API V1
+            status: 'pending',
+            provider: 'smspool' // recorded as smspool via grizzly adapter
+        });
+
+        if (dbError) {
+            console.error('API Order DB insert failed', dbError);
+            // We don't refund here because the number WAS purchased. User can see it in dashboard history at least.
         }
 
         return NextResponse.json({
             success: true,
             id: order.orderId,
-            phone: order.phoneNumber,
-            service: serviceInfo ? serviceInfo.name : serviceId,
+            phone: order.phone,
+            service: serviceName,
+            country: country,
             price: price,
             status: 'pending',
+            expires_in: 1200, // 20 mins
             created_at: new Date().toISOString()
         });
 
     } catch (e: any) {
+        console.error('API Critical Error', e);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

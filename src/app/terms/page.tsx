@@ -41,7 +41,7 @@ export default function Terms() {
                                 <strong>Cryptocurrency Deposits:</strong> You acknowledge that cryptocurrency transactions (Bitcoin, Litecoin, USDT, etc.) are technically irreversible. Once a deposit is confirmed on the blockchain, it cannot be canceled, reversed, or charged back. As such, <strong>we do not offer refunds of deposited funds back to external wallets</strong> under any circumstances. Balance is for platform use only.
                             </li>
                             <li>
-                                <strong>Unused Balance:</strong> Account credits do not expire, but they hold no monetary value outside of the Service and cannot be redeemed for cash or crypto.
+                                <strong>Account Balance:</strong> Account credits do not expire and can be used for any verification service on the platform. Credits cannot be withdrawn or exchanged for cash/crypto.
                             </li>
                             <li>
                                 <strong>Account Termination:</strong> If your account is terminated due to a violation of our Terms (e.g., using the service for illegal activities), any remaining balance is immediately forfeited and will not be refunded.

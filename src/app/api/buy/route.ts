@@ -1,6 +1,9 @@
+import dns from 'dns';
+if (dns.setDefaultResultOrder) dns.setDefaultResultOrder('ipv4first');
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
+import { GrizzlySMSClient } from '@/lib/providers/GrizzlySMSClient';
 /*
  * -----------------------------------------------------------------------------
  * 🔒 LOCKED FILE - CRITICAL PAYMENT INFRASTRUCTURE
@@ -20,6 +23,7 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // SMSPool Config
 const SMSPOOL_API_KEY = process.env.SMSPOOL_API_KEY!;
+const GRIZZLY_API_KEY = process.env.GRIZZLY_API_KEY;
 
 // SMSPool uses numeric IDs. Map ISO country codes to SMSPool country IDs.
 const COUNTRY_CODE_TO_SMSPOOL: Record<string, string> = {
@@ -107,42 +111,74 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
         }
 
-        // 3. Purchase from SMSPool
-        const smsClient = new SMSPoolClient(SMSPOOL_API_KEY);
-
-        // Convert country code to SMSPool country ID
-        const countryUpper = country?.toUpperCase() || '';
-        const smspoolCountry = COUNTRY_CODE_TO_SMSPOOL[countryUpper] || country;
-
-        // Convert service name to SMSPool service ID
-        const serviceLower = service?.toLowerCase() || '';
-        // Normalize: remove special characters for lookup
-        const serviceNormalized = serviceLower.replace(/[^a-z0-9]/g, '');
-
-        // First check overrides, then the full static mapping
-        let smspoolService = SERVICE_OVERRIDES[serviceLower] ||
-            SERVICE_OVERRIDES[serviceNormalized] ||
-            SMSPOOL_SERVICE_MAPPING[serviceLower] ||
-            SMSPOOL_SERVICE_MAPPING[serviceNormalized];
-
-        if (!smspoolService) {
-            console.log(`[Buy API] No mapping found for service="${serviceLower}" (normalized: "${serviceNormalized}")`);
-            // Last resort: use raw service value
-            smspoolService = service;
-        }
-
-        console.log(`[Buy API] SMSPool Purchase: service=${smspoolService} (${serviceLower}), country=${smspoolCountry} (${country})`);
-
+        // 3. Purchase Number (Grizzly or SMSPool)
         let order;
+        let providerUsed = 'smspool';
 
-        try {
-            order = await smsClient.purchaseNumber(smspoolService, smspoolCountry);
-        } catch (e: any) {
-            console.error("SMSPool Purchase Error:", e.message || e);
-            // Don't expose internal provider errors to users
-            return NextResponse.json({
-                error: 'This service is currently unavailable. Please try a different country or service.'
-            }, { status: 503 });
+        if (GRIZZLY_API_KEY) {
+            console.log("Using Grizzly SMS Provider");
+            providerUsed = 'grizzly';
+            try {
+                // Grizzly returns { order_id, number, price? }
+                // Note: Grizzly price is often not returned in purchase, we might need to estimate or fetch
+                // For now, we assume cost <= price (user paid limit)
+                const result = await GrizzlySMSClient.purchaseNumber(service, country);
+
+                if (!result) {
+                    throw new Error("No numbers available (Grizzly)");
+                }
+
+                order = {
+                    orderId: result.order_id,
+                    phoneNumber: result.number,
+                    cost: price, // We deduct the user's max price for now (or exact if known)
+                    expiresAt: new Date(Date.now() + 20 * 60000) // 20 min default
+                };
+
+            } catch (e: any) {
+                console.error("Grizzly Purchase Error:", e.message || e);
+                return NextResponse.json({
+                    error: 'Grizzly SMS Service Unavailable. Try again.'
+                }, { status: 503 });
+            }
+
+        } else {
+            // SMSPool Fallback
+            const smsClient = new SMSPoolClient(SMSPOOL_API_KEY);
+
+            // Convert country code to SMSPool country ID
+            const countryUpper = country?.toUpperCase() || '';
+            const smspoolCountry = COUNTRY_CODE_TO_SMSPOOL[countryUpper] || country;
+
+            // Convert service name to SMSPool service ID
+            const serviceLower = service?.toLowerCase() || '';
+            // Normalize: remove special characters for lookup
+            const serviceNormalized = serviceLower.replace(/[^a-z0-9]/g, '');
+
+            // First check overrides, then the full static mapping
+            let smspoolService = SERVICE_OVERRIDES[serviceLower] ||
+                SERVICE_OVERRIDES[serviceNormalized] ||
+                SMSPOOL_SERVICE_MAPPING[serviceLower] ||
+                SMSPOOL_SERVICE_MAPPING[serviceNormalized];
+
+            if (!smspoolService) {
+                console.log(`[Buy API] No mapping found for service="${serviceLower}" (normalized: "${serviceNormalized}")`);
+                // Last resort: use raw service value
+                smspoolService = service;
+            }
+
+            console.log(`[Buy API] SMSPool Purchase: service=${smspoolService} (${serviceLower}), country=${smspoolCountry} (${country})`);
+
+            try {
+                // We set a strict max_price ($1.00) to ensure profitability.
+                // Selling at $1.50 -> Cost $1.00 -> Profit $0.50.
+                order = await smsClient.purchaseNumber(smspoolService, smspoolCountry, '1', 1.00);
+            } catch (e: any) {
+                console.error("SMSPool Purchase Error:", e.message || e);
+                return NextResponse.json({
+                    error: 'Service unavailable. Please try a different country.'
+                }, { status: 503 });
+            }
         }
 
         // 4. Deduct User Balance
@@ -165,8 +201,9 @@ export async function POST(req: Request) {
                 service: serviceName || service,
                 phone: order.phoneNumber,
                 cost: price,
-                provider_cost: order.cost,
-                status: 'pending'
+                provider_cost: order.cost || price, // Fallback if provider doesn't return cost
+                status: 'pending',
+                provider: providerUsed // Store which provider was used (Requires migration!)
             });
 
             if (insertError) throw insertError;

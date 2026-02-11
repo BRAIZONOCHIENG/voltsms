@@ -3,235 +3,114 @@
  * -----------------------------------------------------------------------------
  * 🔒 LOCKED FILE - PAYMENT COMPONENT
  * -----------------------------------------------------------------------------
- * Crypto payment logic.
+ * Crypto payment logic (Hot Wallet).
  * 
  * See .agent/workflows/protected-files.md for details.
  * -----------------------------------------------------------------------------
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { FaBitcoin, FaCopy, FaSpinner, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
+import { FaBitcoin, FaCopy, FaSpinner, FaCheckCircle, FaWallet } from 'react-icons/fa';
 import clsx from 'clsx';
-import { supabase } from '../lib/supabaseClient';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DepositSectionProps {
     userToken?: string | null;
     onDepositSuccess?: () => void;
 }
 
-interface PaymentDetails {
-    address: string;
-    currency: string;
-    network: string;
-    trackId: string;
-    amount: number;
-    memo?: string;
-}
-
-// All supported coins with their networks
-const CRYPTO_COINS: { symbol: string; name: string; networks: { id: string; name: string }[] }[] = [
-    { symbol: 'BTC', name: 'Bitcoin', networks: [{ id: 'BTC', name: 'Bitcoin' }] },
-    { symbol: 'ETH', name: 'Ethereum', networks: [{ id: 'ETH', name: 'Ethereum (ERC20)' }] },
-    {
-        symbol: 'USDT', name: 'Tether', networks: [
-            { id: 'BSC', name: 'BSC (BEP20) - Low Fees' },
-            { id: 'ERC20', name: 'Ethereum (ERC20)' },
-            { id: 'TRC20', name: 'Tron (TRC20)' }
-        ]
-    },
-    {
-        symbol: 'USDC', name: 'USD Coin', networks: [
-            { id: 'BSC', name: 'BSC (BEP20) - Low Fees' },
-            { id: 'ERC20', name: 'Ethereum (ERC20)' }
-        ]
-    },
-    { symbol: 'LTC', name: 'Litecoin', networks: [{ id: 'LTC', name: 'Litecoin' }] },
-    { symbol: 'SOL', name: 'Solana', networks: [{ id: 'SOL', name: 'Solana' }] },
-    { symbol: 'BNB', name: 'BNB', networks: [{ id: 'BSC', name: 'BSC (BEP20)' }] },
-    { symbol: 'TRX', name: 'Tron', networks: [{ id: 'TRX', name: 'Tron (TRC20)' }] },
-    { symbol: 'DOGE', name: 'Dogecoin', networks: [{ id: 'DOGE', name: 'Dogecoin' }] },
-    { symbol: 'MATIC', name: 'Polygon', networks: [{ id: 'POLYGON', name: 'Polygon' }] },
-    { symbol: 'POL', name: 'POL (Polygon)', networks: [{ id: 'POLYGON', name: 'Polygon' }] },
-    {
-        symbol: 'SHIB', name: 'Shiba Inu', networks: [
-            { id: 'BEP20', name: 'BSC (BEP20) - Low Fees' },
-            { id: 'ERC20', name: 'Ethereum (ERC20)' },
-        ]
-    },
-    { symbol: 'AVAX', name: 'Avalanche', networks: [{ id: 'AVAX', name: 'Avalanche C-Chain' }] },
-    { symbol: 'LINK', name: 'Chainlink', networks: [{ id: 'ERC20', name: 'Ethereum (ERC20)' }] },
-    {
-        symbol: 'DAI', name: 'Dai', networks: [
-            { id: 'ERC20', name: 'Ethereum (ERC20)' },
-            { id: 'BEP20', name: 'BSC (BEP20) - Low Fees' },
-        ]
-    },
-    { symbol: 'BCH', name: 'Bitcoin Cash', networks: [{ id: 'BCH', name: 'Bitcoin Cash' }] },
-    { symbol: 'XMR', name: 'Monero', networks: [{ id: 'XMR', name: 'Monero' }] },
-    { symbol: 'XRP', name: 'Ripple', networks: [{ id: 'XRP', name: 'Ripple' }] },
-    { symbol: 'ADA', name: 'Cardano', networks: [{ id: 'ADA', name: 'Cardano' }] },
-    { symbol: 'NANO', name: 'Nano', networks: [{ id: 'NANO', name: 'Nano' }] },
-    { symbol: 'BUSD', name: 'Binance USD', networks: [{ id: 'BEP20', name: 'BSC (BEP20)' }] },
-    { symbol: 'USDP', name: 'Pax Dollar', networks: [{ id: 'ERC20', name: 'Ethereum' }] },
-    { symbol: 'TUSD', name: 'TrueUSD', networks: [{ id: 'ERC20', name: 'Ethereum' }, { id: 'TRC20', name: 'Tron' }] },
-    { symbol: 'ETC', name: 'Ethereum Classic', networks: [{ id: 'ETC', name: 'Ethereum Classic' }] },
-    { symbol: 'XLM', name: 'Stellar', networks: [{ id: 'XLM', name: 'Stellar' }] },
-];
-
-// Coin logo URLs - using multiple CDN sources for reliability
-const getCoinLogo = (symbol: string) => {
-    const s = symbol.toLowerCase();
-    return `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/32/color/${s}.png`;
-};
+const HOT_WALLET_ADDRESS = process.env.NEXT_PUBLIC_HOT_WALLET_ADDRESS || "0x0000000000000000000000000000000000000000";
 
 export default function DepositSection({ userToken, onDepositSuccess }: DepositSectionProps) {
-    const [depositAmount, setDepositAmount] = useState('10');
-    const [selectedCoin] = useState('USDT'); // Default to USDT for API compatibility
-    const [loading, setLoading] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const [checking, setChecking] = useState(false);
+    const [lastCheck, setLastCheck] = useState<string | null>(null);
 
-    // Reset loading state on mount and when page becomes visible (back button)
-    useEffect(() => {
-        setLoading(false);
-        const handlePageShow = () => setLoading(false);
-        window.addEventListener('pageshow', handlePageShow);
-        return () => window.removeEventListener('pageshow', handlePageShow);
-    }, []);
-
-    const getAccessToken = async () => {
-        // Always try to get a fresh token from the current session for payment actions
-        // disregarding the potentially stale userToken prop
-        const { data } = await supabase.auth.getSession();
-        if (data.session?.access_token) {
-            return data.session.access_token;
-        }
-
-        // If no active session, try to refresh
-        const { data: refreshData, error } = await supabase.auth.refreshSession();
-        if (error || !refreshData.session) {
-            return null;
-        }
-        return refreshData.session.access_token;
+    const handleCopy = () => {
+        navigator.clipboard.writeText(HOT_WALLET_ADDRESS);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleCreatePayment = async () => {
-        if (!selectedCoin) return;
-
-        const amount = parseFloat(depositAmount);
-        if (isNaN(amount) || amount < 1) {
-            alert('Minimum deposit is $1');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            // Get fresh token directly
-            const token = await getAccessToken();
-            if (!token) {
-                alert('Session expired. Please refresh the page.');
-                setLoading(false);
-                return;
-            }
-
-            const res = await fetch('/api/crypto/create-payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    amount: amount,
-                    currency: selectedCoin
-                    // Network is selected on OxaPay page if applicable, or we send valid defaults if needed.
-                    // But Merchant Link usually handles it.
-                })
-            });
-
-            const data = await res.json();
-            console.log('Payment response status:', res.status);
-            console.log('Payment response body:', data);
-
-            if (data.success && data.payLink) {
-                // Redirect to OxaPay
-                window.location.href = data.payLink;
-            } else {
-                alert(`Payment Error: ${data.error || data.message || 'Unknown error'}`);
-                setLoading(false);
-            }
-        } catch (error) {
-            console.error('Payment creation error:', error);
-            alert('Failed to create payment. Please try again.');
-            setLoading(false);
-        }
-    };
+    // Manual validation removed for automation focus
 
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center">
-                    <FaBitcoin className="text-white text-lg" />
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center">
+                        <FaBitcoin className="text-white text-lg" />
+                    </div>
+                    <div>
+                        <h3 className="text-white font-bold text-lg">Crypto Deposit</h3>
+                        <p className="text-stone-500 text-xs">Send crypto to your personal deposit address</p>
+                    </div>
                 </div>
-                <div>
-                    <h3 className="text-white font-bold text-lg">Crypto Deposit</h3>
-                    <p className="text-stone-500 text-xs">Redirects to Secure Checkout</p>
-                </div>
+                {/* Manual Check Button */}
+                {/* Manual Check Button Removed */}
             </div>
 
-            {/* Amount */}
-            <div>
-                <label className="text-xs font-medium text-stone-400 mb-2 block">Amount (USD)</label>
-                <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500 font-bold text-lg">$</span>
-                    <input
-                        type="number"
-                        value={depositAmount}
-                        onChange={(e) => setDepositAmount(e.target.value)}
-                        className="w-full bg-stone-900/50 border border-stone-700/50 rounded-xl pl-10 pr-4 py-4 text-white text-xl font-bold focus:outline-none focus:border-purple-500 transition-all"
-                        placeholder="10"
-                        min="5"
-                        max="1000"
+            {/* Address & QR Code */}
+            <div className="bg-stone-900/50 border border-stone-800 rounded-xl p-6 flex flex-col items-center gap-6">
+
+                {/* QR Code */}
+                <div className="bg-white p-3 rounded-xl shadow-lg shadow-purple-500/10">
+                    <QRCodeSVG
+                        value={HOT_WALLET_ADDRESS}
+                        size={180}
+                        fgColor="#1c1917" // stone-900
+                        bgColor="#ffffff"
+                        level="H"
+                        includeMargin={false}
                     />
                 </div>
-                <div className="grid grid-cols-4 gap-2 mt-3">
-                    {['5', '10', '25', '50', '100', '200', '500', '1000'].map(amt => (
-                        <button
-                            key={amt}
-                            onClick={() => setDepositAmount(amt)}
-                            className={clsx(
-                                "py-2.5 rounded-lg text-sm font-bold transition-all",
-                                depositAmount === amt
-                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
-                                    : 'bg-stone-800/50 text-stone-400 hover:bg-stone-700/50 hover:text-white'
+
+                {/* Address Text */}
+                <div className="w-full text-center space-y-2">
+                    <p className="text-stone-400 text-xs font-medium uppercase tracking-wider">Deposit Address (EVM / BEP20)</p>
+                    <div
+                        onClick={handleCopy}
+                        className="group relative cursor-pointer active:scale-95 transition-transform"
+                    >
+                        <div className="flex items-center justify-center gap-2 px-4 py-3 bg-stone-800/50 hover:bg-stone-800 rounded-lg border border-stone-700/50 hover:border-purple-500/50 transition-colors">
+                            <span className="text-white font-mono text-sm break-all">{HOT_WALLET_ADDRESS}</span>
+                            <div className="bg-stone-700 p-1.5 rounded-md text-stone-400 group-hover:text-white transition-colors">
+                                {copied ? <FaCheckCircle className="text-green-500" /> : <FaCopy />}
+                            </div>
+                        </div>
+                        <AnimatePresence>
+                            {copied && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    className="absolute -top-10 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-full shadow-lg"
+                                >
+                                    Copied!
+                                </motion.div>
                             )}
-                        >
-                            ${amt}
-                        </button>
-                    ))}
+                        </AnimatePresence>
+                    </div>
+                    <p className="text-stone-500 text-[10px] mt-2">
+                        Supported Networks: <span className="text-purple-400 font-bold">BSC (BEP20), Polygon, ETH</span>. <br />
+                        Send only supported tokens (USDT, USDC, BNB, MATIC). Use the correct network.
+                    </p>
                 </div>
             </div>
 
-            {/* Button */}
-            <button
-                onClick={handleCreatePayment}
-                disabled={loading}
-                className={clsx(
-                    "w-full py-4 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2",
-                    !loading
-                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90"
-                        : "bg-stone-800 text-stone-500 cursor-not-allowed"
-                )}
-            >
-                {loading ? <><FaSpinner className="animate-spin" /> Redirecting...</> : `Pay Now`}
-            </button>
-
-            <div className="flex flex-col items-center justify-center gap-2 mt-4 opacity-60 hover:opacity-100 transition-opacity">
-                <p className="text-center text-xs text-stone-500">
-                    You will choose your preferred cryptocurrency on the next step.
-                </p>
-                <p className="text-[10px] text-stone-500 uppercase tracking-widest font-medium">
-                    Powered by <span className="font-bold text-stone-400">OxaPay</span>
-                </p>
+            {/* Instructions */}
+            <div className="bg-purple-900/20 border border-purple-500/30 rounded-xl p-4 flex gap-3 items-start">
+                <FaWallet className="text-purple-400 mt-1 flex-shrink-0" />
+                <div className="space-y-1">
+                    <h4 className="text-purple-200 text-sm font-bold">How it works</h4>
+                    <ul className="text-stone-400 text-xs list-disc list-inside space-y-1">
+                        <li>Send any amount to the address above.</li>
+                        <li>Payments are detected automatically (usually within 1-2 mins).</li>
+                        <li>Your balance will be updated instantly upon confirmation.</li>
+                        <li>Checking for deposits runs continuously.</li>
+                    </ul>
+                </div>
             </div>
         </div>
     );
