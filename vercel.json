@@ -2,7 +2,7 @@
     "crons": [
         {
             "path": "/api/crypto/auto-forward?auth=${CRON_SECRET}",
-            "schedule": "* * * * *"
+            "schedule": "0 0 * * *"
         }
     ]
 }
