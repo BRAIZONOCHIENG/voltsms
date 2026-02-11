@@ -17,11 +17,11 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.store';
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "VoltSMS - Instant SMS Verification | Virtual Phone Numbers",
+    default: "VoltSMS - Non-VoIP SMS Verification | Real SIM Numbers",
     template: "%s | VoltSMS",
   },
-  description: "Get instant SMS verification codes with virtual phone numbers. Secure, private, and reliable service for all your verification needs. SOCKS5 proxies available.",
-  keywords: ["SMS verification", "virtual phone number", "temporary phone number", "receive SMS online", "verification code", "privacy", "SOCKS5 proxy", "residential proxy"],
+  description: "Bypass SMS verification on Tinder, Telegram, WhatsApp & more with premium Non-VoIP numbers. Real SIM cards, not virtual. Instant delivery & secure crypto payments.",
+  keywords: ["Non-VoIP number", "Real SIM verification", "Bypass OTP", "SMS verification service", "Tinder verification", "Telegram verification", "WhatsApp verification", "temporary phone number", "receive SMS online", "bypassing verification"],
   authors: [{ name: "VoltSMS" }],
   creator: "VoltSMS",
   publisher: "VoltSMS",
@@ -41,8 +41,8 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: BASE_URL,
     siteName: "VoltSMS",
-    title: "VoltSMS - Instant SMS Verification | Virtual Phone Numbers",
-    description: "Get instant SMS verification codes with virtual phone numbers. Secure, private, and reliable.",
+    title: "VoltSMS - Non-VoIP SMS Verification | Real SIM Numbers",
+    description: "Bypass SMS verification on Tinder, Telegram, WhatsApp & more with premium Non-VoIP numbers. Real SIM cards, not virtual.",
     images: [
       {
         url: `${BASE_URL}/voltsms-logo.png`,
@@ -54,8 +54,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "VoltSMS - Instant SMS Verification",
-    description: "Get instant SMS verification codes with virtual phone numbers. Secure, private, and reliable.",
+    title: "VoltSMS - Non-VoIP SMS Verification",
+    description: "Bypass SMS verification with premium Non-VoIP numbers. Real SIM cards, not virtual.",
     images: [`${BASE_URL}/voltsms-logo.png`],
   },
   alternates: {

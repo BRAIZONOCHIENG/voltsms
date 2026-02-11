@@ -76,11 +76,11 @@ export default function Home() {
               "price": "1.50",
               "priceCurrency": "USD"
             },
-            "description": "Instant non-VoIP SMS verification for Tinder, Telegram, WhatsApp, and more. Secure crypto payments.",
+            "description": "Premium Non-VoIP SMS verification service using Real SIM cards. Bypass OTP verification on Tinder, Telegram, WhatsApp, and more securely.",
             "aggregateRating": {
               "@type": "AggregateRating",
-              "ratingValue": "4.8",
-              "ratingCount": "1250"
+              "ratingValue": "4.9",
+              "ratingCount": "1450"
             }
           })
         }}
