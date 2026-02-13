@@ -70,36 +70,47 @@ export async function processDeposit({ txHash, from, to, token, amount, isNative
         // Note: BNB MUST be present in the sub-address for gas. 
         // If it's a Token deposit, we might need a "Gas Pump" from Hot Wallet first.
 
-        const forwardAmount = (amount * 28n) / 100n; // 28% forwarded to SMSPool
-        const hotWalletSweepAmount = amount - forwardAmount;
+        // Gas Buffer for 2 native transfers (~2 * 21000 * 3 gwei = 0.000126 BNB)
+        // We use a safe buffer of 0.0002 BNB
+        const GAS_BUFFER = 200000000000000n;
+
+        let effectiveAmount = amount;
+        if (isNative) {
+            effectiveAmount = amount > GAS_BUFFER ? amount - GAS_BUFFER : 0n;
+        }
+
+        const forwardAmount = (effectiveAmount * 28n) / 100n; // 28% forwarded to SMSPool
+        const hotWalletSweepAmount = effectiveAmount - forwardAmount;
 
         let forwardTxHash = '';
         let sweepTxHash = '';
 
         try {
             if (isNative) {
-                // For BNB: Everything is in the sub-address
-                forwardTxHash = await subWalletClient.sendTransaction({
-                    to: SMSPOOL_ADDRESS,
-                    value: forwardAmount
-                });
-                console.log(`[Processor] Forwarded 28% to SMSPool: ${forwardTxHash}`);
+                if (effectiveAmount > 0n) {
+                    // For BNB: Everything is in the sub-address
+                    forwardTxHash = await subWalletClient.sendTransaction({
+                        to: SMSPOOL_ADDRESS,
+                        value: forwardAmount
+                    });
+                    console.log(`[Processor] Forwarded 28% to SMSPool: ${forwardTxHash}`);
 
-                // Sweep remainder to Hot Wallet
-                // Subtract a small amount for gas if we were doing a full sweep, 
-                // but since we keep some for gas, we just sweep what's left
-                sweepTxHash = await subWalletClient.sendTransaction({
-                    to: HOT_WALLET_ADDRESS,
-                    value: hotWalletSweepAmount
-                });
-                console.log(`[Processor] Swept remainder to Hot Wallet: ${sweepTxHash}`);
+                    // Sweep remainder to Hot Wallet
+                    sweepTxHash = await subWalletClient.sendTransaction({
+                        to: HOT_WALLET_ADDRESS,
+                        value: hotWalletSweepAmount
+                    });
+                    console.log(`[Processor] Swept remainder to Hot Wallet: ${sweepTxHash}`);
+                } else {
+                    console.warn(`[Processor] Native deposit ${amount} is too small to cover gas buffer.`);
+                }
             } else {
                 // For TOKENS: Sub-address needs gas (BNB)
                 // 1. Pump Gas from Main Hot Wallet to Sub-address
                 console.log(`[Processor] Pumping gas to sub-address for token sweep...`);
                 const pumpTxHash = await walletClient.sendTransaction({
                     to: to as `0x${string}`,
-                    value: 500000000000000n // 0.0005 BNB (~$0.30)
+                    value: 800000000000000n // 0.0008 BNB (~$0.50) - Safe for 2-3 token txs
                 });
                 await publicClient.waitForTransactionReceipt({ hash: pumpTxHash });
 

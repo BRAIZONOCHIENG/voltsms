@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
             const txHash = event.hash;
             const fromAddress = event.fromAddress;
-            const toAddress = event.toAddress;
+            const toAddress = event.toAddress?.toLowerCase();
             const value = event.value; // Float
             const asset = event.asset; // e.g. "USDT", "BNB"
             const rawValue = event.rawContract?.rawValue;
