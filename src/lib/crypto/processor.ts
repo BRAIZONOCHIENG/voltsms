@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createPublicClient, createWalletClient, http, parseAbiItem, formatUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { bsc } from 'viem/chains';
+import { getHDWallet } from './hdwallet';
 
 // Env variables
 const RPC_URL = process.env.ALCHEMY_BSC_RPC || 'https://bsc-dataseed1.defibit.io';
