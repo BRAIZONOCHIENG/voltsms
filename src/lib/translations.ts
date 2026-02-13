@@ -376,4 +376,13 @@ export const translations: TranslationDict = {
         es: '3. Recibir SMS',
         fr: '3. Recevoir un SMS'
     },
+
+    // Contact Page
+    contact_title: {
+        en: 'Contact Us',
+        ru: 'Связаться с нами',
+        zh: '联系我们',
+        es: 'Contáctenos',
+        fr: 'Contactez-nous'
+    },
 };
