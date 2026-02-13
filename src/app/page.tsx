@@ -9,11 +9,15 @@ import {
   FaFire, FaTelegramPlane, FaWhatsapp, FaGoogle, FaFacebookF, FaInstagram,
   FaDiscord, FaUber, FaTwitter, FaSnapchatGhost, FaTiktok, FaRobot,
   FaShieldAlt, FaBolt, FaUserSecret, FaCheckCircle, FaChevronDown,
-  FaWallet, FaSms, FaUserPlus, FaBitcoin, FaEthereum, FaMonero
+  FaWallet, FaSms, FaUserPlus, FaBitcoin, FaEthereum, FaMonero,
+  FaUsers, FaMoneyBillWave
 } from 'react-icons/fa';
 import { SiTether, SiLitecoin } from 'react-icons/si';
 
+import { useLanguage } from '../context/LanguageContext';
+
 export default function Home() {
+  const { t } = useLanguage();
   const services = [
     { name: "Tinder", price: "$1.50", icon: <FaFire /> },
     { name: "Telegram", price: "$1.50", icon: <FaTelegramPlane /> },
@@ -105,9 +109,9 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.1 }}
             className="text-6xl md:text-8xl font-black mb-6 tracking-tighter leading-none"
           >
-            Bypass Verification <br />
+            {t('hero_title').split('Verifications')[0]} <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 animate-gradient-x">
-              Instantly.
+              {t('hero_title').includes('Verifications') ? 'Verifications' : t('hero_title')}
             </span>
           </motion.h1>
 
@@ -117,8 +121,7 @@ export default function Home() {
             transition={{ duration: 1, delay: 0.3 }}
             className="text-xl md:text-2xl text-stone-300 mb-10 leading-relaxed max-w-3xl mx-auto font-light"
           >
-            Stop wasting money on fake numbers. <br className="hidden md:block" />
-            Get <span className="text-white font-semibold">Real SIM</span> numbers for WhatsApp, Telegram, Tinder & more.
+            {t('hero_subtitle')}
           </motion.p>
 
           <motion.div
@@ -130,7 +133,7 @@ export default function Home() {
             <Link href="/register" className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-purple-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-200"></div>
               <MagneticButton className="relative px-12 py-5 bg-black rounded-xl border border-white/10 flex items-center justify-center gap-4 group-active:scale-95 transition-all">
-                <span className="text-white font-black text-xl">Get Started</span>
+                <span className="text-white font-black text-xl">{t('nav_get_started')}</span>
                 <span className="text-stone-400 group-hover:text-white transition-colors">→</span>
               </MagneticButton>
             </Link>
@@ -181,7 +184,7 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-5xl font-black mb-4">How It Works</h2>
+            <h2 className="text-3xl md:text-5xl font-black mb-4">{t('landing_how_title')}</h2>
             <p className="text-stone-400">Get verified in 3 simple steps</p>
           </motion.div>
 
@@ -189,17 +192,17 @@ export default function Home() {
             {[
               {
                 icon: <FaUserPlus />,
-                title: "1. Create Account",
-                desc: "Sign up anonymously. No ID verification required. Just email and password."
+                title: t('step_1_title'),
+                desc: t('step_1_desc')
               },
               {
                 icon: <FaWallet />,
-                title: "2. Deposit Crypto",
+                title: t('step_2_title'),
                 desc: "Top up your balance instantly using Bitcoin, Litecoin, USDT, or Monero."
               },
               {
                 icon: <FaSms />,
-                title: "3. Get SMS",
+                title: t('step_3_title'),
                 desc: "Select a service, get your number, and receive your verification code instantly."
               }
             ].map((step, i) => (
@@ -231,9 +234,9 @@ export default function Home() {
               className="p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-red-500/30 transition-colors"
             >
               <FaShieldAlt className="text-4xl text-red-500 mb-6" />
-              <h3 className="text-xl font-bold mb-2">Non-VoIP Guarantee</h3>
+              <h3 className="text-xl font-bold mb-2">{t('feat_non_voip_title')}</h3>
               <p className="text-stone-400 text-sm leading-relaxed">
-                Our numbers come from real SIM cards, ensuring the highest success rates for platforms that block VoIP.
+                {t('feat_non_voip_desc')}
               </p>
             </motion.div>
 
@@ -242,9 +245,9 @@ export default function Home() {
               className="p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-purple-500/30 transition-colors"
             >
               <FaBolt className="text-4xl text-purple-500 mb-6" />
-              <h3 className="text-xl font-bold mb-2">Instant Delivery</h3>
+              <h3 className="text-xl font-bold mb-2">{t('feat_instant_title')}</h3>
               <p className="text-stone-400 text-sm leading-relaxed">
-                Automated system delivers numbers and codes 24/7. No waiting for manual processing.
+                {t('feat_instant_desc')}
               </p>
             </motion.div>
 
@@ -253,10 +256,9 @@ export default function Home() {
               className="p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-blue-500/30 transition-colors"
             >
               <FaUserSecret className="text-4xl text-blue-500 mb-6" />
-              <FaUserSecret className="text-4xl text-blue-500 mb-6" />
-              <h3 className="text-xl font-bold mb-2">Secure & Private</h3>
+              <h3 className="text-xl font-bold mb-2">{t('feat_secure_title')}</h3>
               <p className="text-stone-400 text-sm leading-relaxed">
-                Protect your personal data. Use our temporary numbers to verify accounts without exposing your primary phone number.
+                {t('feat_secure_desc')}
               </p>
             </motion.div>
           </div>
@@ -272,7 +274,7 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-5xl font-black mb-4">Questions?</h2>
+            <h2 className="text-3xl md:text-5xl font-black mb-4">{t('landing_faq_title')}</h2>
             <p className="text-stone-400">Everything you need to know</p>
           </motion.div>
 
@@ -312,23 +314,96 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Affiliate Program Section */}
+      <section className="py-16 relative z-10">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="bg-gradient-to-br from-purple-900/60 to-blue-900/60 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 overflow-hidden relative group">
+            <div className="absolute top-0 right-0 -translate-y-1/2 -translate-x-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px] pointer-events-none group-hover:bg-purple-500/30 transition-colors duration-700" />
+            <div className="absolute bottom-0 left-0 translate-y-1/2 translate-x-1/2 w-96 h-96 bg-blue-500/20 rounded-full blur-[120px] pointer-events-none group-hover:bg-blue-500/30 transition-colors duration-700" />
+
+            <div className="relative z-10 flex flex-col lg:flex-row items-center gap-10">
+              <div className="lg:w-1/2">
+                <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-white/10 border border-white/10 text-purple-400 font-black text-xs uppercase tracking-widest">
+                  {t('aff_partner_title')}
+                </div>
+                <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight">
+                  {t('aff_earn_up_to')} <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">
+                    {t('aff_commission')}
+                  </span>
+                </h2>
+                <p className="text-stone-300 text-lg mb-8 leading-relaxed font-light">
+                  {t('aff_desc')}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                  <div className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <FaCheckCircle className="text-emerald-500 shrink-0" />
+                    <span className="text-sm font-medium">Automatic Payouts</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <FaCheckCircle className="text-emerald-500 shrink-0" />
+                    <span className="text-sm font-medium">Lifetime Revenue</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <FaCheckCircle className="text-emerald-500 shrink-0" />
+                    <span className="text-sm font-medium">Transparent Tracking</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <FaCheckCircle className="text-emerald-500 shrink-0" />
+                    <span className="text-sm font-medium">High Conversion Rate</span>
+                  </div>
+                </div>
+                <Link href="/affiliate">
+                  <button className="bg-white text-black font-black px-8 py-3.5 rounded-full hover:bg-stone-200 transition-transform hover:scale-105 active:scale-95 shadow-xl shadow-white/10">
+                    {t('aff_cta')}
+                  </button>
+                </Link>
+              </div>
+
+              <div className="lg:w-1/2 grid grid-cols-2 gap-4">
+                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 flex flex-col items-center text-center">
+                  <FaUsers className="text-3xl text-purple-400 mb-4" />
+                  <div className="text-xl font-black mb-1">Lifetime</div>
+                  <div className="text-[10px] text-stone-500 uppercase tracking-widest">Tracking</div>
+                </div>
+                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 flex flex-col items-center text-center">
+                  <FaMoneyBillWave className="text-3xl text-emerald-400 mb-4" />
+                  <div className="text-xl font-black mb-1">10-15%</div>
+                  <div className="text-[10px] text-stone-500 uppercase tracking-widest">Commission</div>
+                </div>
+                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 flex flex-col items-center text-center">
+                  <FaBolt className="text-3xl text-blue-400 mb-4" />
+                  <div className="text-xl font-black mb-1">Instant</div>
+                  <div className="text-[10px] text-stone-500 uppercase tracking-widest">Activation</div>
+                </div>
+                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 flex flex-col items-center text-center">
+                  <FaShieldAlt className="text-3xl text-red-400 mb-4" />
+                  <div className="text-xl font-black mb-1">Secure</div>
+                  <div className="text-[10px] text-stone-500 uppercase tracking-widest">Payments</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA */}
-      <section className="py-24 relative z-10 text-center px-4">
+      <section className="py-16 relative z-10 text-center px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           className="max-w-4xl mx-auto"
         >
-          <h2 className="text-4xl md:text-7xl font-black mb-8">
-            Start bypassing <br />
+          <h2 className="text-4xl md:text-6xl font-black mb-6">
+            {t('cta_start_title')} <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-purple-500">
-              verifications today.
+              {t('cta_verifications_today')}
             </span>
           </h2>
           <Link href="/register">
             <button className="bg-white text-black font-black text-xl px-16 py-6 rounded-full hover:bg-stone-200 transition-transform hover:scale-105 active:scale-95 shadow-2xl shadow-white/20">
-              Create Free Account
+              {t('cta_create_account')}
             </button>
           </Link>
           <div className="mt-8 flex items-center justify-center gap-2 text-stone-500 text-sm font-medium">

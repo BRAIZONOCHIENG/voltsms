@@ -20,7 +20,6 @@ import { Service } from './services';
 import { Country, COUNTRIES } from './countries';
 import { SERVICES_DATA } from './services_data';
 import { supabase } from '../../lib/supabaseClient';
-import RentalSection from '../../components/RentalSection';
 import DepositSection from '../../components/DepositSection';
 import VoltSplitterPayment from '../../components/VoltSplitterPayment';
 import VerificationModal from '../../components/VerificationModal';
@@ -33,7 +32,7 @@ interface Order {
     created_at?: string;
     expires_at?: number; // timestamp
     code?: string;
-    type?: 'rental' | 'sms' | 'voice';
+    type?: 'sms' | 'voice';
     price?: number;
     isOptimistic?: boolean;
 }
@@ -71,7 +70,7 @@ interface ServiceRowData {
     items: Service[];
     onSelect: (s: Service) => void;
     selectedId: string;
-    verificationMethod: 'sms' | 'voice' | 'rental';
+    verificationMethod: 'sms' | 'voice';
     pinnedServices: string[];
     togglePin: (id: string, e: React.MouseEvent) => void;
 }
@@ -122,18 +121,23 @@ const ServiceRow = ({ data, index, style }: { data: ServiceRowData; index: numbe
     );
 };
 
+import { useLanguage } from '../../context/LanguageContext';
+
 export default function Dashboard() {
+    const { t } = useLanguage();
     const [balance, setBalance] = useState(0.0);
     const [orders, setOrders] = useState<Order[]>([]);
 
     // Tab State
-    const [dashboardTab, setDashboardTab] = useState<'active' | 'history'>('active');
+    const [dashboardTab, setDashboardTab] = useState<'active' | 'history' | 'deposits'>('active');
     const [actionTab, setActionTab] = useState<'order' | 'deposit'>('order');
 
+    const [deposits, setDeposits] = useState<any[]>([]);
+
     // Order Flow State
-    const [selectedService, setSelectedService] = useState<Service>({ id: '', name: 'Select Service', price: 0, category: '' });
+    const [selectedService, setSelectedService] = useState<Service>({ id: '', name: t('svc_select_service'), price: 0, category: '' });
     const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]);
-    const [verificationMethod, setVerificationMethod] = useState<'sms' | 'voice' | 'rental'>('sms');
+    const [verificationMethod, setVerificationMethod] = useState<'sms' | 'voice'>('sms');
 
     // UI State
     const [searchTerm, setSearchTerm] = useState('');
@@ -172,6 +176,7 @@ export default function Dashboard() {
             setUserToken(session.access_token);
             setUserId(session.user.id);
             fetchData(session.access_token);
+            fetchDeposits(session.access_token);
 
             // Restore pins
             const savedPins = localStorage.getItem('pinnedServices');
@@ -180,6 +185,16 @@ export default function Dashboard() {
         init();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [router]);
+
+    const fetchDeposits = async (token: string) => {
+        try {
+            const res = await fetch('/api/deposits', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) setDeposits(data.deposits);
+        } catch (e) { console.error('Error fetching deposits:', e); }
+    };
 
     // Reset service selection when verification method changes
     useEffect(() => {
@@ -461,11 +476,11 @@ export default function Dashboard() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-white">Verifications</h1>
-                        <p className="text-white/60 text-sm mt-1">Manage your SMS verifications</p>
+                        <h1 className="text-3xl font-bold text-white">{t('dash_header_title')}</h1>
+                        <p className="text-white/60 text-sm mt-1">{t('dash_header_desc')}</p>
                     </div>
                     <div className="bg-gradient-to-br from-white/10 to-transparent backdrop-blur-2xl border-t border-l border-white/20 border-b border-r border-black/20 px-6 py-3 rounded-2xl flex flex-col items-end shadow-2xl">
-                        <span className="text-xs text-stone-400 uppercase font-semibold tracking-wider">Balance</span>
+                        <span className="text-xs text-stone-400 uppercase font-semibold tracking-wider">{t('dash_balance')}</span>
                         <span className="text-2xl font-bold text-[var(--color-primary)]">${balance.toFixed(2)}</span>
                     </div>
                 </div>
@@ -479,13 +494,13 @@ export default function Dashboard() {
                                 onClick={() => setActionTab('order')}
                                 className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all ${actionTab === 'order' ? 'bg-white/10 text-white shadow-lg ring-1 ring-white/10' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
                             >
-                                <FaShoppingCart /> Order Service
+                                <FaShoppingCart /> {t('dash_order_number')}
                             </button>
                             <button
                                 onClick={() => setActionTab('deposit')}
                                 className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all ${actionTab === 'deposit' ? 'bg-white/10 text-white shadow-lg ring-1 ring-white/10' : 'text-stone-400 hover:text-white hover:bg-white/5'}`}
                             >
-                                <FaWallet /> Add Funds
+                                <FaWallet /> {t('dash_add_funds')}
                             </button>
                         </div>
 
@@ -497,127 +512,121 @@ export default function Dashboard() {
                                     {/* Verification Method Toggle - REMOVED for Non-VoIP focus */}
                                     {/* Defaults to SMS */}
 
-                                    {verificationMethod === 'rental' ? (
-                                        <RentalSection userToken={userToken} />
-                                    ) : (
-                                        <>
-                                            {/* Service Selector (MOVED UP - User Request) */}
-                                            <div className="space-y-2 relative z-20 mt-2">
-                                                <label className="text-xs font-semibold uppercase text-stone-400 tracking-wider ml-1">Select Service</label>
-                                                <div className="relative" ref={dropdownRef}>
-                                                    <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 flex items-center justify-between hover:bg-white/10 text-left">
-                                                        <div>
-                                                            <div className="font-bold text-white">{selectedService.name}</div>
-                                                            <div className="text-xs text-stone-400">{selectedService.id === '' ? 'Select a service first' : 'Instant Delivery'}</div>
-                                                        </div>
-                                                        <div className="flex items-center gap-3">
-                                                            {selectedService.id && <span className="bg-white/10 px-2 py-1 rounded text-[var(--color-accent)] font-mono">${(verificationMethod === 'voice' ? 2.50 : (selectedService.prices?.[selectedCountry.code] || selectedService.price)).toFixed(2)}</span>}
-                                                            <FaChevronDown />
-                                                        </div>
-                                                    </button>
-                                                    {isDropdownOpen && (
-                                                        <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl z-50 shadow-2xl">
-                                                            <div className="p-3 border-b border-white/10 sticky top-0 bg-[#1a1a1a] z-10">
-                                                                <FaSearch className="absolute left-6 top-6 text-stone-500" />
-                                                                <input autoFocus type="text" placeholder="Search services..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-white" />
-                                                            </div>
-                                                            <div className="h-[300px]">
-                                                                <List height={300} width="100%" itemCount={sortedServices.length} itemSize={60}>
-                                                                    {({ index, style }) => <ServiceRow data={{
-                                                                        items: sortedServices, onSelect: (s) => {
-                                                                            setSelectedService(s);
-                                                                            setIsDropdownOpen(false);
-                                                                            // Auto-select first available country if current is invalid
-                                                                            if (s.prices && !s.prices[selectedCountry.code]) {
-                                                                                const firstAvailCode = Object.keys(s.prices)[0];
-                                                                                const firstAvail = COUNTRIES.find(c => c.code === firstAvailCode);
-                                                                                if (firstAvail) setSelectedCountry(firstAvail);
-                                                                                else setSelectedCountry(COUNTRIES[0]); // Fallback
-                                                                            }
-                                                                        }, selectedId: selectedService.id, verificationMethod, pinnedServices, togglePin
-                                                                    }} index={index} style={style} />}
-                                                                </List>
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                    {/* Service Selector (MOVED UP - User Request) */}
+                                    <div className="space-y-2 relative z-20 mt-2">
+                                        <label className="text-xs font-semibold uppercase text-stone-400 tracking-wider ml-1">{t('svc_select_service')}</label>
+                                        <div className="relative" ref={dropdownRef}>
+                                            <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 flex items-center justify-between hover:bg-white/10 text-left">
+                                                <div>
+                                                    <div className="font-bold text-white">{selectedService.name}</div>
+                                                    <div className="text-xs text-stone-400">{selectedService.id === '' ? t('svc_select_first') : t('svc_instant_delivery')}</div>
                                                 </div>
-                                                {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />}
-                                            </div>
-
-                                            {/* Country Selector (MOVED DOWN) */}
-                                            <div className="space-y-2 relative z-10 mt-4" ref={countryDropdownRef}>
-                                                <label className="text-xs font-semibold uppercase text-stone-400 tracking-wider ml-1">Select Country</label>
-                                                <button
-                                                    onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                                                    disabled={!selectedService.id}
-                                                    className={`w-full h-[52px] px-4 rounded-xl border flex items-center justify-between transition-all ${!selectedService.id ? 'bg-white/5 border-white/5 opacity-50 cursor-not-allowed' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-2xl">{selectedCountry.flag}</span>
-                                                        <span className="font-medium">{selectedCountry.name}</span>
-                                                        {selectedService.id && selectedService.prices && selectedService.prices[selectedCountry.code] && (
-                                                            <span className="ml-2 text-xs bg-green-900/40 text-green-400 px-2 py-0.5 rounded font-mono">
-                                                                ${selectedService.prices[selectedCountry.code].toFixed(2)}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                <div className="flex items-center gap-3">
+                                                    {selectedService.id && <span className="bg-white/10 px-2 py-1 rounded text-[var(--color-accent)] font-mono">${(verificationMethod === 'voice' ? 2.50 : (selectedService.prices?.[selectedCountry.code] || selectedService.price)).toFixed(2)}</span>}
                                                     <FaChevronDown />
-                                                </button>
-                                                <AnimatePresence>
-                                                    {isCountryDropdownOpen && (
-                                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl max-h-[400px] z-50 flex flex-col shadow-2xl">
-                                                            <div className="p-3 border-b border-white/10 sticky top-0 bg-[#1a1a1a] z-10">
-                                                                <FaSearch className="absolute left-6 top-6 text-stone-500" />
-                                                                <input autoFocus type="text" placeholder="Search..." value={countrySearchTerm} onChange={e => setCountrySearchTerm(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-white" />
-                                                            </div>
-                                                            <div className="overflow-y-auto flex-1">
-                                                                {(() => {
-                                                                    // Filter countries based on Service Availability
-                                                                    let availableList = COUNTRIES;
-                                                                    if (selectedService.id && selectedService.prices && Object.keys(selectedService.prices).length > 0) {
-                                                                        availableList = COUNTRIES.filter(c => selectedService.prices![c.code] !== undefined);
-                                                                    }
-
-                                                                    // Filter by search term
-                                                                    if (countrySearchTerm) {
-                                                                        availableList = availableList.filter(c => c.name.toLowerCase().includes(countrySearchTerm.toLowerCase()));
-                                                                    }
-
-                                                                    if (availableList.length === 0) return <div className="p-4 text-center text-stone-500 text-sm">No countries available for this service.</div>;
-
-                                                                    return availableList.map(c => (
-                                                                        <button key={c.code} onClick={() => { setSelectedCountry(c); setIsCountryDropdownOpen(false); }} className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 text-left group">
-                                                                            <div className="flex items-center gap-3">
-                                                                                <span className="text-2xl">{c.flag}</span>
-                                                                                <span className="text-white group-hover:text-[var(--color-primary)] transition-colors">{c.name}</span>
-                                                                            </div>
-                                                                            {selectedService.id && selectedService.prices && selectedService.prices[c.code] && (
-                                                                                <span className="text-sm font-bold text-stone-400 group-hover:text-white">
-                                                                                    ${selectedService.prices[c.code].toFixed(2)}
-                                                                                </span>
-                                                                            )}
-                                                                        </button>
-                                                                    ));
-                                                                })()}
-                                                            </div>
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-                                                {isCountryDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsCountryDropdownOpen(false)} />}
-                                            </div>
-
-                                            {/* Buy Button */}
-                                            <button
-                                                onClick={handleBuy}
-                                                disabled={loading || !selectedService.id}
-                                                className="w-full mt-6 py-4 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white font-black text-lg shadow-lg hover:shadow-purple-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                            >
-                                                {loading ? <span className="animate-spin">⏳</span> : <FaShoppingCart />}
-                                                {loading ? 'Processing...' : `Purchase ${selectedService.name} - ${selectedCountry.name} ($${(verificationMethod === 'voice' ? 2.50 : (selectedService.prices?.[selectedCountry.code] || selectedService.price)).toFixed(2)})`}
+                                                </div>
                                             </button>
-                                            {msg && <div className={`mt-4 p-3 rounded-xl text-center text-sm font-bold ${msg.includes('Error') ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>{msg}</div>}
-                                        </>
-                                    )}
+                                            {isDropdownOpen && (
+                                                <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl z-50 shadow-2xl">
+                                                    <div className="p-3 border-b border-white/10 sticky top-0 bg-[#1a1a1a] z-10">
+                                                        <FaSearch className="absolute left-6 top-6 text-stone-500" />
+                                                        <input autoFocus type="text" placeholder={t('svc_search_placeholder')} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-white" />
+                                                    </div>
+                                                    <div className="h-[300px]">
+                                                        <List height={300} width="100%" itemCount={sortedServices.length} itemSize={60}>
+                                                            {({ index, style }) => <ServiceRow data={{
+                                                                items: sortedServices, onSelect: (s) => {
+                                                                    setSelectedService(s);
+                                                                    setIsDropdownOpen(false);
+                                                                    // Auto-select first available country if current is invalid
+                                                                    if (s.prices && !s.prices[selectedCountry.code]) {
+                                                                        const firstAvailCode = Object.keys(s.prices)[0];
+                                                                        const firstAvail = COUNTRIES.find(c => c.code === firstAvailCode);
+                                                                        if (firstAvail) setSelectedCountry(firstAvail);
+                                                                        else setSelectedCountry(COUNTRIES[0]); // Fallback
+                                                                    }
+                                                                }, selectedId: selectedService.id, verificationMethod, pinnedServices, togglePin
+                                                            }} index={index} style={style} />}
+                                                        </List>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />}
+                                    </div>
+
+                                    {/* Country Selector (MOVED DOWN) */}
+                                    <div className="space-y-2 relative z-10 mt-4" ref={countryDropdownRef}>
+                                        <label className="text-xs font-semibold uppercase text-stone-400 tracking-wider ml-1">{t('cnt_select_country')}</label>
+                                        <button
+                                            onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                                            disabled={!selectedService.id}
+                                            className={`w-full h-[52px] px-4 rounded-xl border flex items-center justify-between transition-all ${!selectedService.id ? 'bg-white/5 border-white/5 opacity-50 cursor-not-allowed' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-2xl">{selectedCountry.flag}</span>
+                                                <span className="font-medium">{selectedCountry.name}</span>
+                                                {selectedService.id && selectedService.prices && selectedService.prices[selectedCountry.code] && (
+                                                    <span className="ml-2 text-xs bg-green-900/40 text-green-400 px-2 py-0.5 rounded font-mono">
+                                                        ${selectedService.prices[selectedCountry.code].toFixed(2)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <FaChevronDown />
+                                        </button>
+                                        <AnimatePresence>
+                                            {isCountryDropdownOpen && (
+                                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl max-h-[400px] z-50 flex flex-col shadow-2xl">
+                                                    <div className="p-3 border-b border-white/10 sticky top-0 bg-[#1a1a1a] z-10">
+                                                        <FaSearch className="absolute left-6 top-6 text-stone-500" />
+                                                        <input autoFocus type="text" placeholder={t('cnt_search_placeholder')} value={countrySearchTerm} onChange={e => setCountrySearchTerm(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-white" />
+                                                    </div>
+                                                    <div className="overflow-y-auto flex-1">
+                                                        {(() => {
+                                                            // Filter countries based on Service Availability
+                                                            let availableList = COUNTRIES;
+                                                            if (selectedService.id && selectedService.prices && Object.keys(selectedService.prices).length > 0) {
+                                                                availableList = COUNTRIES.filter(c => selectedService.prices![c.code] !== undefined);
+                                                            }
+
+                                                            // Filter by search term
+                                                            if (countrySearchTerm) {
+                                                                availableList = availableList.filter(c => c.name.toLowerCase().includes(countrySearchTerm.toLowerCase()));
+                                                            }
+
+                                                            if (availableList.length === 0) return <div className="p-4 text-center text-stone-500 text-sm">No countries available for this service.</div>;
+
+                                                            return availableList.map(c => (
+                                                                <button key={c.code} onClick={() => { setSelectedCountry(c); setIsCountryDropdownOpen(false); }} className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 text-left group">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className="text-2xl">{c.flag}</span>
+                                                                        <span className="text-white group-hover:text-[var(--color-primary)] transition-colors">{c.name}</span>
+                                                                    </div>
+                                                                    {selectedService.id && selectedService.prices && selectedService.prices[c.code] && (
+                                                                        <span className="text-sm font-bold text-stone-400 group-hover:text-white">
+                                                                            ${selectedService.prices[c.code].toFixed(2)}
+                                                                        </span>
+                                                                    )}
+                                                                </button>
+                                                            ));
+                                                        })()}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                        {isCountryDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsCountryDropdownOpen(false)} />}
+                                    </div>
+
+                                    {/* Buy Button */}
+                                    <button
+                                        onClick={handleBuy}
+                                        disabled={loading || !selectedService.id}
+                                        className="w-full mt-6 py-4 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white font-black text-lg shadow-lg hover:shadow-purple-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        {loading ? <span className="animate-spin">⏳</span> : <FaShoppingCart />}
+                                        {loading ? 'Processing...' : `Purchase ${selectedService.name} - ${selectedCountry.name} ($${(verificationMethod === 'voice' ? 2.50 : (selectedService.prices?.[selectedCountry.code] || selectedService.price)).toFixed(2)})`}
+                                    </button>
+                                    {msg && <div className={`mt-4 p-3 rounded-xl text-center text-sm font-bold ${msg.includes('Error') ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>{msg}</div>}
                                 </>
                             )}
                         </div>
@@ -640,6 +649,12 @@ export default function Dashboard() {
                             >
                                 History
                             </button>
+                            <button
+                                onClick={() => { setDashboardTab('deposits'); if (userToken) fetchDeposits(userToken); }}
+                                className={`pb-2 text-sm font-bold border-b-2 transition-colors ${dashboardTab === 'deposits' ? 'border-[var(--color-primary)] text-white' : 'border-transparent text-stone-500 hover:text-stone-300'}`}
+                            >
+                                Deposits
+                            </button>
                         </div>
                         <div className="flex gap-2 w-full md:w-auto">
                             <button onClick={() => { setVerificationMethod('sms'); orderSectionRef.current?.scrollIntoView({ behavior: 'smooth' }); }} className="flex-1 md:flex-none bg-[#0070BA] hover:bg-[#005ea6] text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors shadow-lg shadow-blue-900/20">
@@ -648,62 +663,126 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    <div className="p-0 overflow-x-auto">
+                    <div className="p-0 overflow-x-auto min-h-[400px]">
                         <table className="w-full text-left text-sm">
-                            <thead className="text-stone-500 font-bold uppercase text-xs bg-white/[0.02]">
-                                <tr>
-                                    <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Created At</th>
-                                    <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Service</th>
-                                    <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Number</th>
-                                    <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Status</th>
-                                    <th className="px-6 py-4 font-normal tracking-wider text-right whitespace-nowrap">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {(dashboardTab === 'active' ? activeOrders : historyOrders).length === 0 ? (
-                                    <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-stone-600 italic">
-                                            No {dashboardTab} verifications found.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    (dashboardTab === 'active' ? activeOrders : historyOrders).map((order) => (
-                                        <tr key={order.order_id} className="hover:bg-white/[0.02] transition-colors">
-                                            <td className="px-6 py-4 text-stone-300 whitespace-nowrap">{formatDate(order.created_at)}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-2">
-                                                    <img src={`/icons/${getServiceIconSlug(order.service)}.svg`} className="w-4 h-4 opacity-70" alt="" onError={(e) => e.currentTarget.style.display = 'none'} />
-                                                    <span className="font-medium text-white">{order.service}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 font-mono text-stone-300 whitespace-nowrap">{order.phone}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {order.status === 'pending' ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-yellow-500/10 text-yellow-500 text-xs font-bold">
-                                                        <FaClock className="animate-pulse" /> Pending
-                                                    </span>
-                                                ) : order.status === 'completed' ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-green-500/10 text-green-400 text-xs font-bold">
-                                                        <FaCheckCircle /> Completed
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs font-bold">
-                                                        <FaTimesCircle /> {order.status}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-right whitespace-nowrap">
-                                                <button
-                                                    onClick={() => { setModalOrder(order); setIsModalOpen(true); }}
-                                                    className="px-3 py-1.5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors text-xs font-bold text-white"
-                                                >
-                                                    Open
-                                                </button>
-                                            </td>
+                            {dashboardTab === 'deposits' ? (
+                                <>
+                                    <thead className="text-stone-500 font-bold uppercase text-xs bg-white/[0.02]">
+                                        <tr>
+                                            <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Date</th>
+                                            <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Method / Type</th>
+                                            <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Amount</th>
+                                            <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Status</th>
+                                            <th className="px-6 py-4 font-normal tracking-wider text-right whitespace-nowrap">Notes</th>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {deposits.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={5} className="px-6 py-12 text-center text-stone-600 italic">
+                                                    No deposits found.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            deposits.map((dep) => (
+                                                <tr key={dep.id} className="hover:bg-white/[0.02] transition-colors">
+                                                    <td className="px-6 py-4 text-stone-400 whitespace-nowrap">{formatDate(dep.created_at)}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-white uppercase text-xs">{dep.type.replace('_', ' ')}</span>
+                                                            <span className="text-[10px] text-stone-500">{dep.description}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`font-mono font-bold ${dep.type === 'referral_bonus' ? 'text-green-400' : 'text-[var(--color-primary)]'}`}>
+                                                            +${dep.amount.toFixed(2)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-500/10 text-green-400 text-[10px] font-bold uppercase">
+                                                            <FaCheckCircle className="text-[8px]" /> {dep.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right text-xs text-stone-400 italic">
+                                                        {dep.type === 'referral_bonus' ? '10% Partner Bonus' : ''}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </>
+                            ) : (
+                                <>
+                                    <thead className="text-stone-500 font-bold uppercase text-xs bg-white/[0.02]">
+                                        <tr>
+                                            <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Created At</th>
+                                            <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Service</th>
+                                            <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Number</th>
+                                            <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Code</th>
+                                            <th className="px-6 py-4 font-normal tracking-wider whitespace-nowrap">Status</th>
+                                            <th className="px-6 py-4 font-normal tracking-wider text-right whitespace-nowrap">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {(dashboardTab === 'active' ? activeOrders : historyOrders).length === 0 ? (
+                                            <tr>
+                                                <td colSpan={6} className="px-6 py-12 text-center text-stone-600 italic">
+                                                    No {dashboardTab} verifications found.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            (dashboardTab === 'active' ? activeOrders : historyOrders).map((order) => (
+                                                <tr key={order.order_id} className="hover:bg-white/[0.02] transition-colors">
+                                                    <td className="px-6 py-4 text-stone-300 whitespace-nowrap">{formatDate(order.created_at)}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center gap-2">
+                                                            <img src={`/icons/${getServiceIconSlug(order.service)}.svg`} className="w-4 h-4 opacity-70" alt="" onError={(e) => e.currentTarget.style.display = 'none'} />
+                                                            <span className="font-medium text-white">{order.service}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 font-mono text-stone-300 whitespace-nowrap">{order.phone}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        {order.code ? (
+                                                            <button
+                                                                onClick={() => { navigator.clipboard.writeText(order.code!); alert('Copied!'); }}
+                                                                className="font-mono font-bold text-[var(--color-primary)] hover:underline"
+                                                                title="Click to copy"
+                                                            >
+                                                                {order.code}
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-stone-600 italic">---</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        {order.status === 'pending' ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-yellow-500/10 text-yellow-500 text-xs font-bold">
+                                                                <FaClock className="animate-pulse" /> Pending
+                                                            </span>
+                                                        ) : order.status === 'completed' ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-green-500/10 text-green-400 text-xs font-bold">
+                                                                <FaCheckCircle /> Completed
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs font-bold">
+                                                                <FaTimesCircle /> {order.status}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                                                        <button
+                                                            onClick={() => { setModalOrder(order); setIsModalOpen(true); }}
+                                                            className="px-3 py-1.5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors text-xs font-bold text-white"
+                                                        >
+                                                            Open
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </>
+                            )}
                         </table>
                     </div>
                 </div>

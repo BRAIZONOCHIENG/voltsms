@@ -28,15 +28,17 @@ const metadata = {
 };
 
 // 5. Create AppKit instance
-createAppKit({
-    adapters: [wagmiAdapter],
-    networks,
-    metadata,
-    projectId,
-    features: {
-        analytics: true
-    }
-});
+if (typeof window !== 'undefined') {
+    createAppKit({
+        adapters: [wagmiAdapter],
+        networks,
+        metadata,
+        projectId,
+        features: {
+            analytics: true
+        }
+    });
+}
 
 const queryClient = new QueryClient();
 

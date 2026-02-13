@@ -17,11 +17,25 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://voltsms.store';
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "VoltSMS - Non-VoIP SMS Verification | Real SIM Numbers",
+    default: "VoltSMS - Premium Non-VoIP SMS Verification | Real SIM Numbers",
     template: "%s | VoltSMS",
   },
-  description: "Bypass SMS verification on Tinder, Telegram, WhatsApp & more with premium Non-VoIP numbers. Real SIM cards, not virtual. Instant delivery & secure crypto payments.",
-  keywords: ["Non-VoIP number", "Real SIM verification", "Bypass OTP", "SMS verification service", "Tinder verification", "Telegram verification", "WhatsApp verification", "temporary phone number", "receive SMS online", "bypassing verification"],
+  description: "Bypass SMS verification on Tinder, Telegram, WhatsApp, ChatGPT & more with premium Non-VoIP numbers. Real SIM cards, not virtual. Instant delivery & 100% Privacy.",
+  keywords: [
+    "Non-VoIP sms verification",
+    "Real SIM card verification",
+    "Bypass OTP online",
+    "Burner phone numbers",
+    "Tinder sms bypass",
+    "Telegram verification code",
+    "WhatsApp non-voip numbers",
+    "ChatGPT sms verification",
+    "Real SIM sms service",
+    "Privacy phone numbers",
+    "Crypto sms verification",
+    "Buy temporary phone numbers",
+    "Receive SMS online non-voip"
+  ],
   authors: [{ name: "VoltSMS" }],
   creator: "VoltSMS",
   publisher: "VoltSMS",
@@ -41,21 +55,21 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: BASE_URL,
     siteName: "VoltSMS",
-    title: "VoltSMS - Non-VoIP SMS Verification | Real SIM Numbers",
-    description: "Bypass SMS verification on Tinder, Telegram, WhatsApp & more with premium Non-VoIP numbers. Real SIM cards, not virtual.",
+    title: "VoltSMS - Professional Non-VoIP SMS Verification Service",
+    description: "Get real SIM numbers for OTP verification. Bypasses all VoIP filters on major platforms like Telegram, Tinder, and WhatsApp.",
     images: [
       {
         url: `${BASE_URL}/voltsms-logo.png`,
-        width: 512,
-        height: 512,
+        width: 1200,
+        height: 630,
         alt: "VoltSMS Logo",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "VoltSMS - Non-VoIP SMS Verification",
-    description: "Bypass SMS verification with premium Non-VoIP numbers. Real SIM cards, not virtual.",
+    title: "VoltSMS - Real SIM SMS Verification (Non-VoIP)",
+    description: "Instant, anonymous, and reliable SMS verification using real SIM cards. No VoIP blocked numbers.",
     images: [`${BASE_URL}/voltsms-logo.png`],
   },
   alternates: {
@@ -71,6 +85,8 @@ import { AnimatedBackground } from "../components/AnimatedBackground";
 import { OrganizationSchema, WebSiteSchema } from "../components/JsonLd";
 import { Web3ModalProvider } from "../context/Web3ModalProvider";
 
+import { LanguageProvider } from "../context/LanguageContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -81,17 +97,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col relative`}
       >
-        <AnimatedBackground />
-        <Web3ModalProvider>
-          <div className="relative z-10 flex flex-col flex-1">
-            {children}
-          </div>
-          <OrganizationSchema />
-          <WebSiteSchema />
-          <div className="relative z-10">
-            <Footer />
-          </div>
-        </Web3ModalProvider>
+        <LanguageProvider>
+          <AnimatedBackground />
+          <Web3ModalProvider>
+            <div className="relative z-10 flex flex-col flex-1">
+              {children}
+            </div>
+            <OrganizationSchema />
+            <WebSiteSchema />
+            <div className="relative z-10">
+              <Footer />
+            </div>
+          </Web3ModalProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

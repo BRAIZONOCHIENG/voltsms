@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import NextImage from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { FaChartLine, FaNewspaper, FaCreditCard, FaCog, FaSignOutAlt, FaBars, FaTimes, FaServer } from 'react-icons/fa';
+import { FaChartLine, FaNewspaper, FaCreditCard, FaCog, FaSignOutAlt, FaBars, FaTimes, FaServer, FaUsers } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -12,6 +12,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const navItems = [
         { name: 'Dashboard', path: '/admin', icon: <FaChartLine /> },
+        { name: 'Users', path: '/admin/users', icon: <FaUsers /> },
+        { name: 'Affiliates', path: '/admin/affiliates', icon: <FaUsers /> },
         { name: 'Profit Withdrawal', path: '/admin/crypto', icon: <FaCreditCard /> },
         { name: 'Blog Posts', path: '/admin/blog', icon: <FaNewspaper /> },
         { name: 'APIs', path: '/admin/apis', icon: <FaServer /> },

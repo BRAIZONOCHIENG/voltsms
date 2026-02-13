@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { updateSession } from '@/lib/supabase/middleware';
+import { updateSession } from './lib/supabase/middleware';
 
 // 1. Blocked User Agents (Scrapers/Bots)
 const BLOCKED_USER_AGENTS = [
@@ -35,14 +35,7 @@ export async function middleware(request: NextRequest) {
 
     // --- A. Bot Blocking ---
     const isBot = BLOCKED_USER_AGENTS.some(agent => ua.includes(agent));
-    // Allow Google/Bing/Twitter bots explicitly if needed, but 'bot' keyword might be too aggressive.
-    // Let's refine the specific blocking list to be safe but strict on tools.
-    // We already have 'bot' in the list above, let's allow common search engines if strictly needed,
-    // but for "not scrapable" user request, blocking generic 'bot' is safer.
-    // Exception: Allow Googlebot for SEO if this was a public site, but user said "not scrapable".
-    // We will stick to the list. If it matches a tool, block it.
-
-    // Exception for internal API routes that need server-to-server access
+    // Exception for internal API routes
     const isInternalApiRoute =
         request.nextUrl.pathname.startsWith('/api/crypto/voltsplitter') ||
         request.nextUrl.pathname.startsWith('/api/crypto/auto-forward') ||
@@ -51,7 +44,6 @@ export async function middleware(request: NextRequest) {
         request.nextUrl.pathname.startsWith('/api/cron') ||
         request.nextUrl.pathname.startsWith('/api/webhook');
 
-    // Exception: Allow requests with valid API Key format (B2B API access)
     const hasApiKey = request.headers.get('authorization')?.startsWith('Bearer sk_live_') ||
         request.headers.get('authorization')?.startsWith('Bearer vk_');
 
@@ -70,18 +62,15 @@ export async function middleware(request: NextRequest) {
         });
     }
 
-
     // --- B. Rate Limiting ---
-    // Only rate limit API routes and Page loads, skip static assets for performance
     if (
         !request.nextUrl.pathname.startsWith('/_next') &&
-        !request.nextUrl.pathname.includes('.') // Skip files like .png, .css
+        !request.nextUrl.pathname.includes('.')
     ) {
         const now = Date.now();
         const record = rateLimit.get(ip) || { count: 0, startTime: now };
 
         if (now - record.startTime > RATE_LIMIT_WINDOW_MS) {
-            // Reset window
             record.count = 1;
             record.startTime = now;
         } else {
@@ -101,8 +90,30 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // 3. Update Supabase Session (replaces NextResponse.next())
-    return await updateSession(request);
+    // 3. Update Supabase Session
+    const response = await updateSession(request);
+
+    // --- C. Affiliate Tracking ---
+    const ref = request.nextUrl.searchParams.get('ref');
+    if (ref) {
+        response.cookies.set('volt_ref_code', ref, {
+            maxAge: 30 * 24 * 60 * 60,
+            path: '/',
+            httpOnly: false,
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+        });
+    }
+
+    response.cookies.set('volt_ip', ip, {
+        maxAge: 30 * 24 * 60 * 60,
+        path: '/',
+        httpOnly: false,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+    });
+
+    return response;
 }
 
 export const config = {

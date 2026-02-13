@@ -74,17 +74,27 @@ export async function GET(req: NextRequest) {
             userTrend = 100;
         }
 
-        // --- 4. Active Services ---
+        // --- 4. Success Rate Calculation ---
+        const { data: recentOrders } = await supabaseAdmin
+            .from('orders')
+            .select('status')
+            .neq('status', 'pending'); // Only count final states
+
+        const totalFinal = recentOrders?.length || 0;
+        const completed = recentOrders?.filter(o => o.status === 'completed').length || 0;
+        const actualSuccessRate = totalFinal > 0 ? (completed / totalFinal) * 100 : 0;
+
+        // --- 5. Active Services ---
         const uniqueServices = new Set(allOrders?.map(o => o.service)).size;
 
         return NextResponse.json({
-            revenue: totalProfit, // Mapped to "Total Revenue" card in frontend, but now allows "Profit" label logic
+            revenue: totalProfit,
             activeUsers: totalUsers || 0,
             activeServices: uniqueServices || 0,
             revenueTrend: profitTrend.toFixed(1),
             userTrend: userTrend.toFixed(1),
             latency: latency,
-            successRate: 98.5, // Mock for now
+            successRate: actualSuccessRate,
             success: true
         });
 

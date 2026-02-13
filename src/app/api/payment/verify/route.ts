@@ -95,23 +95,29 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ detail: 'Invalid type' }, { status: 400 });
         }
 
-        // Credit Balance
-        const { data: dbUser } = await supabaseAdmin
-            .from('users')
-            .select('balance')
-            .eq('user_id', user.id)
-            .single();
+        // Success! Atomic Credit Balance
+        const { error: rpcError } = await supabaseAdmin.rpc('increment_balance', {
+            target_user_id: user.id,
+            amount: verifiedAmount
+        });
 
-        if (!dbUser) return NextResponse.json({ detail: 'User not found' }, { status: 404 });
+        if (rpcError) {
+            console.error("RPC Credit Error:", rpcError);
+            throw rpcError;
+        }
 
-        const newBalance = (dbUser.balance || 0) + verifiedAmount;
+        // 3. Log the deposit in transactions
+        await supabaseAdmin.from('transactions').insert({
+            user_id: user.id,
+            type: 'deposit',
+            amount: verifiedAmount,
+            currency: currency,
+            status: 'completed',
+            description: `Deposit via ${type === 'paystack' ? 'Card/Mpesa' : 'PayPal'}`,
+            reference: reference || orderID
+        });
 
-        await supabaseAdmin
-            .from('users')
-            .update({ balance: newBalance })
-            .eq('user_id', user.id);
-
-        return NextResponse.json({ success: true, newBalance });
+        return NextResponse.json({ success: true, amount: verifiedAmount });
 
     } catch (e: any) {
         console.error("Verification Error:", e);

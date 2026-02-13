@@ -32,10 +32,10 @@ export default function AdminSettingsPage() {
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold uppercase text-stone-500 mb-2">Support Email</label>
+                            <label className="block text-xs font-bold uppercase text-stone-500 mb-2">Telegram Support</label>
                             <input
-                                type="email"
-                                defaultValue="support@voltsms.store"
+                                type="text"
+                                defaultValue="@voltsms_support"
                                 className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
                             />
                         </div>

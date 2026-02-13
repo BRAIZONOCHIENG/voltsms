@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { MOCK_POSTS } from './blog/data';
+import { SEO_SERVICES, SEO_COUNTRIES } from './verify/constants';
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const baseUrl = 'https://voltsms.store';
@@ -11,7 +12,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
         '/login',
         '/promo',
         '/blog',
-        '/about', // Added
+        '/affiliate',
+        '/about',
         '/contact',
         '/support',
         '/terms',
@@ -21,7 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         url: `${baseUrl}${route}`,
         lastModified: new Date(),
         changeFrequency: 'weekly' as const,
-        priority: route === '' ? 1 : 0.8,
+        priority: route === '' ? 1.0 : 0.8,
     }));
 
     // Dynamic Blog Routes
@@ -32,5 +34,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
         priority: 0.7,
     }));
 
-    return [...staticRoutes, ...blogRoutes];
+    // SEO Landing Pages
+    const seoRoutes: MetadataRoute.Sitemap = [];
+    SEO_SERVICES.forEach((service: { slug: string; name: string }) => {
+        SEO_COUNTRIES.forEach((country: string) => {
+            seoRoutes.push({
+                url: `${baseUrl}/verify/${service.slug}/${country.toLowerCase()}`,
+                lastModified: new Date(),
+                changeFrequency: 'weekly' as const,
+                priority: 0.9,
+            });
+        });
+    });
+
+    return [...staticRoutes, ...blogRoutes, ...seoRoutes];
 }

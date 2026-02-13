@@ -15,16 +15,50 @@ export default function Register() {
     const [error, setError] = useState('');
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
+    const [refCode, setRefCode] = useState('');
     const router = useRouter();
+
+    useEffect(() => {
+        // Capture ref from URL
+        const params = new URLSearchParams(window.location.search);
+        const ref = params.get('ref');
+        if (ref) {
+            setRefCode(ref);
+            // Optional: Store in cookie for persistence if they browse around
+            document.cookie = `ref=${ref}; path=/; max-age=2592000`; // 30 days
+        } else {
+            // Check cookie
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ref=`);
+            if (parts.length === 2) setRefCode(parts.pop()?.split(';').shift() || '');
+        }
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        if (!acceptedTerms) {
-            setError('You must accept the Terms of Service and Privacy Policy to register.');
-            return;
-        }
+        const getCookie = (name: string) => {
+            if (typeof document === 'undefined') return undefined;
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop()?.split(';').shift();
+        };
+        const getFingerprint = () => {
+            if (typeof window === 'undefined') return '';
+            const signals = [
+                navigator.userAgent,
+                navigator.language,
+                new Date().getTimezoneOffset().toString(),
+                window.screen.width + 'x' + window.screen.height,
+                window.screen.colorDepth.toString(),
+                navigator.hardwareConcurrency?.toString() || '0'
+            ];
+            return btoa(signals.join('|'));
+        };
+
+        const fingerprint = getFingerprint();
+        const clientIp = getCookie('volt_ip');
 
         try {
             const { data, error } = await supabase.auth.signUp({
@@ -32,6 +66,11 @@ export default function Register() {
                 password,
                 options: {
                     emailRedirectTo: `${window.location.origin}/login?verified=true`,
+                    data: {
+                        ref_code: refCode || null,
+                        ip: clientIp || null,
+                        fingerprint: fingerprint || null,
+                    }
                 },
             });
 
@@ -218,6 +257,22 @@ export default function Register() {
                             <label htmlFor="terms" className="text-sm text-white/80 cursor-pointer select-none">
                                 I agree to the <Link href="/terms" className="text-purple-300 hover:text-white underline transition-colors" target="_blank">Terms of Service</Link> and <Link href="/privacy" className="text-purple-300 hover:text-white underline transition-colors" target="_blank">Privacy Policy</Link>
                             </label>
+                        </div>
+
+                        <div className="pt-2">
+                            <label className="block text-xs font-semibold mb-2 text-white/50 uppercase tracking-wide">Referral Code (Optional)</label>
+                            <input
+                                type="text"
+                                value={refCode}
+                                onChange={(e) => setRefCode(e.target.value.toUpperCase())}
+                                className="w-full bg-black/10 border border-white/5 rounded-xl px-4 py-3 text-white/80 focus:outline-none focus:ring-1 focus:ring-purple-500/30 transition-all placeholder:text-white/20 text-sm font-mono"
+                                placeholder="E3GJ7J0N"
+                            />
+                            {refCode && (
+                                <p className="text-[10px] text-purple-400 mt-1 font-bold">
+                                    ✨ Bonus Active: 10% Extra on every deposit!
+                                </p>
+                            )}
                         </div>
 
 

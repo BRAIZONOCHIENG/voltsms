@@ -32,7 +32,20 @@ export async function updateSession(request: NextRequest) {
     )
 
     // refreshing the auth token
-    await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    // --- Ban Enforcement ---
+    if (user && !request.nextUrl.pathname.startsWith('/banned')) {
+        const { data: userData } = await supabase
+            .from('users')
+            .select('is_banned')
+            .eq('id', user.id)
+            .single();
+
+        if (userData?.is_banned) {
+            return NextResponse.redirect(new URL('/banned', request.url));
+        }
+    }
 
     return response
 }
