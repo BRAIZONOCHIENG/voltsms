@@ -506,7 +506,7 @@ export default function Dashboard() {
 
                         <div className="px-6 pb-8 pt-2">
                             {actionTab === 'deposit' ? (
-                                <VoltSplitterPayment userId={userId} />
+                                <VoltSplitterPayment userId={userId} userToken={userToken || undefined} />
                             ) : (
                                 <>
                                     {/* Verification Method Toggle - REMOVED for Non-VoIP focus */}

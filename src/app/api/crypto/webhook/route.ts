@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { processDeposit } from '@/lib/crypto/processor';
+import { parseUnits } from 'viem';
 
 const ALCHEMY_WEBHOOK_SECRET = process.env.ALCHEMY_WEBHOOK_SECRET;
 
@@ -27,49 +28,52 @@ export async function POST(req: NextRequest) {
 
     try {
         const payload = JSON.parse(bodyText);
-        const activity = payload.event?.activity;
+        const activities = payload.event?.activity;
 
-        if (!activity || !Array.isArray(activity)) {
+        if (!activities || !Array.isArray(activities)) {
             return NextResponse.json({ success: true, message: 'No activity found' });
         }
 
-        console.log(`[Webhook] Received ${activity.length} activities from Alchemy`);
+        console.log(`[Webhook] Received ${activities.length} activities from Alchemy`);
 
-        for (const event of activity) {
+        for (const event of activities) {
             // We only care about incoming transfers to our Hot Wallet
             // Alchemy Notify 'activity' includes many fields.
             // Documentation: https://docs.alchemy.com/reference/notify-api-quickstart
 
             const txHash = event.hash;
             const fromAddress = event.fromAddress;
+            const toAddress = event.toAddress;
             const value = event.value; // Float
             const asset = event.asset; // e.g. "USDT", "BNB"
-            const rawValue = event.rawContract?.rawValue; // Hex value for tokens or null for native?
+            const rawValue = event.rawContract?.rawValue;
 
-            if (!txHash || !fromAddress) continue;
+            if (!txHash || !fromAddress || !toAddress) {
+                console.warn(`[Webhook] Skipping activity due to missing data: txHash: ${txHash}, from: ${fromAddress}, to: ${toAddress}`);
+                continue;
+            }
 
-            let isNative = false;
-            let tokenAddress = '';
+            console.log(`[Webhook] Activity: ${value} ${asset} from ${fromAddress} to ${toAddress}`);
+
+            // Identify token address
+            const isNative = asset === 'BNB';
+            const tokenAddress = isNative ? 'NATIVE' : event.rawContract?.address || 'UNKNOWN';
+
+            // Convert amount to BigInt decimals
+            const decimals = 18; // Default for BSC Native & Common Tokens
             let amountBigInt = 0n;
-
-            if (event.category === 'external') {
-                // Native BNB transfer
-                isNative = true;
-                tokenAddress = 'NATIVE';
-                // Value is in BNB (float). Conver to Wei.
-                amountBigInt = BigInt(Math.floor(value * 10 ** 18));
-            } else if (event.category === 'token') {
-                // ERC20/BEP20 transfer
-                isNative = false;
-                tokenAddress = event.rawContract.address;
-                // Use raw value if possible to avoid floating point precision issues
-                amountBigInt = BigInt(rawValue || '0');
+            try {
+                amountBigInt = parseUnits(value.toString(), decimals);
+            } catch (e) {
+                console.error(`[Webhook] Error parsing amount for tx ${txHash}: ${value}`, e);
+                continue;
             }
 
             if (amountBigInt > 0n) {
                 await processDeposit({
                     txHash,
                     from: fromAddress,
+                    to: toAddress,
                     token: tokenAddress,
                     amount: amountBigInt,
                     isNative

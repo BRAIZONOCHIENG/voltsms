@@ -61,9 +61,9 @@ async function fetchPrices(): Promise<{ [key: string]: number }> {
     }
 }
 
-export default function VoltSplitterPayment({ userId }: { userId: string }) {
+export default function VoltSplitterPayment({ userId, userToken }: { userId: string, userToken?: string }) {
     const { open } = useAppKit();
-    const { address, isConnected } = useAppKitAccount();
+    const { address: connectedAddress, isConnected } = useAppKitAccount();
 
     const [amountUSD, setAmountUSD] = useState<number>(10);
     const [selectedToken, setSelectedToken] = useState(TOKENS[0]);
@@ -73,6 +73,35 @@ export default function VoltSplitterPayment({ userId }: { userId: string }) {
     const [prices, setPrices] = useState<{ [key: string]: number }>({});
     const [loadingPrices, setLoadingPrices] = useState(true);
     const [showManualModal, setShowManualModal] = useState(false);
+
+    // Unique Deposit Address state
+    const [depositAddress, setDepositAddress] = useState<string | null>(null);
+    const [loadingAddress, setLoadingAddress] = useState(true);
+
+    // Fetch unique deposit address
+    useEffect(() => {
+        const fetchAddress = async () => {
+            try {
+                setLoadingAddress(true);
+                const res = await fetch('/api/crypto/allocate', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`
+                    }
+                });
+                const data = await res.json();
+                if (data.address) {
+                    setDepositAddress(data.address);
+                }
+            } catch (err) {
+                console.error('Failed to fetch deposit address:', err);
+            } finally {
+                setLoadingAddress(false);
+            }
+        };
+
+        if (userToken) fetchAddress();
+    }, [userToken]);
 
     // Write Contract for ERC20 Transfers
     const { writeContract, data: writeHash, error: writeError, isPending: isWritePending, reset: resetWrite } = useWriteContract();
@@ -87,10 +116,6 @@ export default function VoltSplitterPayment({ userId }: { userId: string }) {
 
     const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
-    // Note: Allowance is not needed for direct transfers of Native token, 
-    // and strictly speaking not needed for direct transfer of ERC20 if using 'transfer',
-    // but we use 'transfer' directly so no approval needed for the contract.
-
     useEffect(() => {
         const loadPrices = async () => {
             setLoadingPrices(true);
@@ -103,17 +128,6 @@ export default function VoltSplitterPayment({ userId }: { userId: string }) {
         return () => clearInterval(interval);
     }, []);
 
-    // Register wallet with backend for payment tracking
-    useEffect(() => {
-        if (isConnected && address && userId) {
-            fetch('/api/crypto/register-wallet', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address, userId })
-            }).catch(err => console.error('Failed to register wallet:', err));
-        }
-    }, [isConnected, address, userId]);
-
     const getCryptoAmount = useCallback((): string => {
         const price = prices[selectedToken.symbol];
         if (!price || price === 0) return '0';
@@ -123,6 +137,10 @@ export default function VoltSplitterPayment({ userId }: { userId: string }) {
 
     const handlePayment = async () => {
         if (!isConnected) return open();
+        if (!depositAddress) {
+            alert('Deposit address not ready. Please refresh.');
+            return;
+        }
 
         const price = prices[selectedToken.symbol];
         if (!price) {
@@ -139,18 +157,18 @@ export default function VoltSplitterPayment({ userId }: { userId: string }) {
             setTxStep('paying');
 
             if (selectedToken.address === 'NATIVE') {
-                // Send BNB directly
+                // Send BNB directly to the UNIQUE sub-address
                 sendTransaction({
-                    to: RECEIVER_ADDRESS,
+                    to: depositAddress as `0x${string}`,
                     value: amountWei,
                 });
             } else {
-                // Send ERC20 Token directly
+                // Send ERC20 Token directly to the UNIQUE sub-address
                 writeContract({
                     address: selectedToken.address as `0x${string}`,
                     abi: ERC20_ABI,
                     functionName: 'transfer',
-                    args: [RECEIVER_ADDRESS, amountWei]
+                    args: [depositAddress as `0x${string}`, amountWei]
                 });
             }
         } catch (err) {
@@ -163,35 +181,19 @@ export default function VoltSplitterPayment({ userId }: { userId: string }) {
     useEffect(() => {
         if (isConfirmed) {
             setTxStep('idle');
-            // Trigger immediate backend scan to credit user "instantly"
-            fetch('/api/crypto/auto-forward')
-                .then(res => res.json())
-                .then(data => console.log('Immediate scan triggered:', data))
-                .catch(err => console.error('Scan trigger failed:', err));
+            // Trigger immediate scan
+            fetch('/api/crypto/auto-forward').catch(console.error);
         }
     }, [isConfirmed]);
 
     const copyAddress = async () => {
+        if (!depositAddress) return;
         try {
-            await navigator.clipboard.writeText(RECEIVER_ADDRESS);
+            await navigator.clipboard.writeText(depositAddress);
             setCopied(true);
             setTimeout(() => setCopied(false), 3000);
         } catch (err) {
-            // Fallback for older browsers
-            const textArea = document.createElement('textarea');
-            textArea.value = RECEIVER_ADDRESS;
-            textArea.style.position = 'fixed';
-            textArea.style.left = '-999999px';
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                setCopied(true);
-                setTimeout(() => setCopied(false), 3000);
-            } catch (e) {
-                alert('Copy failed. Address: ' + RECEIVER_ADDRESS);
-            }
-            document.body.removeChild(textArea);
+            alert('Copy failed. Address: ' + depositAddress);
         }
     };
 
@@ -371,13 +373,19 @@ export default function VoltSplitterPayment({ userId }: { userId: string }) {
 
                         {/* QR Code */}
                         <div className="flex justify-center mb-6">
-                            <div className="bg-white p-4 rounded-xl shadow-xl">
-                                <QRCodeSVG
-                                    value={RECEIVER_ADDRESS}
-                                    size={180}
-                                    level="H"
-                                    includeMargin={true}
-                                />
+                            <div className="bg-white p-4 rounded-xl shadow-xl min-h-[212px] min-w-[212px] flex items-center justify-center">
+                                {loadingAddress ? (
+                                    <FaSpinner className="animate-spin text-purple-600 text-3xl" />
+                                ) : depositAddress ? (
+                                    <QRCodeSVG
+                                        value={depositAddress}
+                                        size={180}
+                                        level="H"
+                                        includeMargin={true}
+                                    />
+                                ) : (
+                                    <p className="text-stone-500 text-xs">Failed to load address</p>
+                                )}
                             </div>
                         </div>
 
@@ -388,7 +396,7 @@ export default function VoltSplitterPayment({ userId }: { userId: string }) {
                                 <input
                                     type="text"
                                     readOnly
-                                    value={RECEIVER_ADDRESS}
+                                    value={loadingAddress ? 'Loading...' : (depositAddress || 'Error')}
                                     className="flex-1 bg-transparent text-purple-300 font-mono text-xs border-none outline-none cursor-text select-all"
                                     onClick={(e) => (e.target as HTMLInputElement).select()}
                                 />
