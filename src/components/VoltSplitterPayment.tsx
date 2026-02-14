@@ -57,7 +57,6 @@ export default function VoltSplitterPayment({ userId, userToken }: { userId: str
                 </div>
                 <div>
                     <h3 className="text-lg font-bold text-white leading-tight">Crypto Deposit</h3>
-                    <p className="text-xs text-stone-400">Auto-convert any coin to balance</p>
                 </div>
             </div>
 
@@ -133,11 +132,7 @@ export default function VoltSplitterPayment({ userId, userToken }: { userId: str
                             className="flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-opacity grayscale hover:grayscale-0"
                         >
                             <span className="text-[9px] uppercase tracking-widest font-bold text-white">Powered by</span>
-                            <img
-                                src="https://nowpayments.io/images/logo-white.svg"
-                                alt="NOWPayments"
-                                className="h-3"
-                            />
+                            <span className="text-[10px] font-black text-white italic tracking-tighter">NOWPayments</span>
                         </a>
                     </div>
                 </div>

@@ -20,7 +20,6 @@ import { Service } from './services';
 import { Country, COUNTRIES } from './countries';
 import { SERVICES_DATA } from './services_data';
 import { supabase } from '../../lib/supabaseClient';
-import DepositSection from '../../components/DepositSection';
 import VoltSplitterPayment from '../../components/VoltSplitterPayment';
 import VerificationModal from '../../components/VerificationModal';
 

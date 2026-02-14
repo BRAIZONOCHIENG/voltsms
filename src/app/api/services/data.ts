@@ -10,6 +10,9 @@ export interface Service {
 }
 
 export const HARDCODED_SERVICES: Service[] = [
+    // Catch-all ($0.95) - User Request: First in dropdown
+    { id: '9999', name: 'Service Not Listed', price: 0.95, category: 'Other' },
+
     // Social Media (Premium)
     { id: 'wa', name: 'WhatsApp', price: 1.50, category: 'Social' },
     { id: 'tg', name: 'Telegram', price: 1.50, category: 'Social' },
@@ -66,9 +69,6 @@ export const HARDCODED_SERVICES: Service[] = [
     { id: 'st', name: 'Steam', price: 0.60, category: 'Gaming' },
     { id: 'nf', name: 'Netflix', price: 0.60, category: 'Other' },
     { id: 'tw', name: 'Twitch', price: 0.60, category: 'Other' },
-
-    // Catch-all ($0.60)
-    { id: '9999', name: 'Service Not Listed', price: 1.44, category: 'Other' },
 ];
 
 export const HARDCODED_COUNTRIES = [
