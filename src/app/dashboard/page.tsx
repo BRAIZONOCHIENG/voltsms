@@ -303,13 +303,9 @@ export default function Dashboard() {
         localStorage.setItem('pinnedServices', JSON.stringify(newPins));
     };
     const [services, setServices] = useState<Service[]>([]);
-    const [loadingServices, setLoadingServices] = useState(true);
-
-    // Fetch Services
     // Load Static Services (Instant)
     useEffect(() => {
         setServices(SERVICES_DATA);
-        setLoadingServices(false);
     }, []);
 
     // Memoize sorted services

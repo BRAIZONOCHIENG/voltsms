@@ -39,7 +39,7 @@ export async function updateSession(request: NextRequest) {
         const { data: userData } = await supabase
             .from('users')
             .select('is_banned')
-            .eq('id', user.id)
+            .eq('user_id', user.id)
             .single();
 
         if (userData?.is_banned) {

@@ -70,6 +70,7 @@ export default function UserManagement() {
         try {
             const res = await fetch('/api/admin/users', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId, is_banned: !currentStatus })
             });
             if (res.ok) {
@@ -125,7 +126,7 @@ export default function UserManagement() {
                             <tr><td colSpan={5} className="px-6 py-10 text-center">No users found.</td></tr>
                         ) : (
                             filteredUsers.map((user) => (
-                                <tr key={user.id} className={`hover:bg-white/5 transition-colors ${user.is_banned ? 'opacity-50' : ''}`}>
+                                <tr key={user.id} className={`hover:bg-white/5 transition-colors ${user.is_banned ? 'bg-red-500/5' : ''}`}>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20">
@@ -180,9 +181,17 @@ export default function UserManagement() {
                                         {new Date(user.created_at).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${user.is_banned ? 'bg-red-500/20 text-red-500' : 'bg-green-500/20 text-green-500'}`}>
-                                            {user.is_banned ? 'Banned' : 'Active'}
-                                        </span>
+                                        {user.is_banned ? (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 text-red-500 text-[10px] font-bold uppercase border border-red-500/30">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                                Banned
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 text-green-500 text-[10px] font-bold uppercase border border-green-500/30">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                                Active
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2">

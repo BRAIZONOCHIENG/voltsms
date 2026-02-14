@@ -33,6 +33,21 @@ function LoginContent() {
                 return;
             }
 
+            if (data.user) {
+                // Explicitly check for ban status at login
+                const { data: userData } = await supabase
+                    .from('users')
+                    .select('is_banned')
+                    .eq('user_id', data.user.id)
+                    .single();
+
+                if (userData?.is_banned) {
+                    await supabase.auth.signOut();
+                    setError('Your account has been permanently banned. Please contact support.');
+                    return;
+                }
+            }
+
             if (data.session) {
                 router.push('/dashboard');
             }
