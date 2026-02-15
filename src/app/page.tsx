@@ -77,15 +77,22 @@ export default function Home() {
             "operatingSystem": "Web",
             "offers": {
               "@type": "Offer",
-              "price": "1.50",
+              "price": "0.95",
               "priceCurrency": "USD"
             },
-            "description": "Premium Non-VoIP SMS verification service using Real SIM cards. Bypass OTP verification on Tinder, Telegram, WhatsApp, and more securely.",
+            "description": "Premium Non-VoIP SMS verification service using Real SIM cards. Bypass OTP verification on Tinder, Telegram, WhatsApp, and Google safely.",
             "aggregateRating": {
               "@type": "AggregateRating",
               "ratingValue": "4.9",
-              "ratingCount": "1450"
-            }
+              "ratingCount": "2540"
+            },
+            "featureList": [
+              "Real SIM Card Numbers",
+              "Non-VoIP Technology",
+              "Instant SMS Delivery",
+              "Anonymous Crypto Payments",
+              "Money Back Guarantee"
+            ]
           })
         }}
       />
@@ -175,6 +182,67 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Comparison Section (Real SIM vs Virtual) */}
+      <section className="py-20 relative z-10">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl md:text-6xl font-black mb-4 tracking-tighter">Real SIM vs <span className="text-stone-500">Virtual</span></h2>
+            <p className="text-stone-400 text-lg max-w-2xl mx-auto font-light">
+              Most services block Virtual (VoIP) numbers. VoltSMS uses physical SIM cards tied to real carriers like AT&T, T-Mobile, and Vodafone.
+            </p>
+          </motion.div>
+
+          <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] overflow-hidden">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="px-8 py-8 text-stone-500 font-bold uppercase tracking-widest text-xs">Features</th>
+                  <th className="px-8 py-8 text-white font-black text-center text-lg">
+                    <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Real SIM</span>
+                    <br /><span className="text-[10px] text-stone-500 font-bold uppercase">(Non-VoIP)</span>
+                  </th>
+                  <th className="px-8 py-8 text-stone-500 font-black text-center text-lg">
+                    Virtual
+                    <br /><span className="text-[10px] text-stone-700 font-bold uppercase">(VoIP)</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {[
+                  { f: "Physical SIM card in a real hardware hub", rs: true, v: false },
+                  { f: "Recognized as a legitimate mobile user", rs: true, v: false },
+                  { f: "Bypasses strict VoIP/Virtual filters", rs: true, v: false },
+                  { f: "Private numbers, not publicly accessible", rs: true, v: false },
+                  { f: "Acceptable for WhatsApp, Google, Tinder", rs: true, v: false },
+                  { f: "Works where free numbers fail 100%", rs: true, v: false },
+                ].map((row, i) => (
+                  <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-8 py-6 text-stone-300 font-medium text-sm md:text-base">{row.f}</td>
+                    <td className="px-8 py-6 text-center">
+                      <div className="flex items-center justify-center">
+                        <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center">
+                          <FaCheckCircle className="text-green-500 text-xs" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                      <div className="flex items-center justify-center">
+                        <span className="text-stone-700 font-bold">—</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works Section */}
       <section className="py-16 relative z-10 border-t border-white/5 bg-white/[0.02] backdrop-blur-sm">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -219,6 +287,48 @@ export default function Home() {
                 </div>
                 <h3 className="text-lg font-bold mb-2">{step.title}</h3>
                 <p className="text-stone-400 leading-relaxed text-sm">{step.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Global Statistics Section */}
+      <section className="py-20 relative z-10 border-y border-white/5 bg-white/[0.01]">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-5xl font-black mb-4">High Quality for Affordable Price</h2>
+            <p className="text-stone-400 max-w-2xl mx-auto uppercase tracking-widest text-[10px] font-bold">
+              Only quality and paid numbers with the highest success rates on the market today.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+            {[
+              { label: "Received SMS", val: "25,400+", icon: <FaSms className="text-purple-400" /> },
+              { label: "Users Registered", val: "12,800+", icon: <FaUsers className="text-blue-400" /> },
+              { label: "Available Countries", val: "184+", icon: <FaBolt className="text-yellow-400" /> },
+              { label: "Available Services", val: "1,000+", icon: <FaShieldAlt className="text-green-400" /> },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -5 }}
+                className="p-8 rounded-[2rem] bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col items-center text-center group hover:border-white/20 transition-all"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  {stat.icon}
+                </div>
+                <div className="text-3xl md:text-4xl font-black mb-2 tracking-tighter">{stat.val}</div>
+                <div className="text-[10px] text-stone-500 uppercase font-black tracking-widest">{stat.label}</div>
               </motion.div>
             ))}
           </div>

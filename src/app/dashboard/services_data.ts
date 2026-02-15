@@ -15,7 +15,8 @@ export const SERVICES_DATA: Service[] = [
         "prices": {
             "GLOBAL": 0.95
         },
-        "category": "Other"
+        "category": "Other",
+        "price": 0.95
     },
     {
         "id": "aliexpress",
