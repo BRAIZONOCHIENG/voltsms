@@ -148,6 +148,11 @@ export default function Dashboard() {
     const [pinnedServices, setPinnedServices] = useState<string[]>([]);
     const [selectedCategory, setSelectedCategory] = useState('All');
 
+    // Pagination State
+    const [historyPage, setHistoryPage] = useState(1);
+    const [depositsPage, setDepositsPage] = useState(1);
+    const ROWS_PER_PAGE = 5;
+
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalOrder, setModalOrder] = useState<Order | null>(null);
@@ -658,7 +663,7 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    <div className="p-0 overflow-x-auto min-h-[400px]">
+                    <div className="p-0 overflow-x-auto min-h-[460px] flex flex-col justify-between">
                         <table className="w-full text-left text-sm">
                             {dashboardTab === 'deposits' ? (
                                 <>
@@ -679,7 +684,7 @@ export default function Dashboard() {
                                                 </td>
                                             </tr>
                                         ) : (
-                                            deposits.map((dep) => (
+                                            deposits.slice((depositsPage - 1) * ROWS_PER_PAGE, depositsPage * ROWS_PER_PAGE).map((dep) => (
                                                 <tr key={dep.id} className="hover:bg-white/[0.02] transition-colors">
                                                     <td className="px-6 py-4 text-stone-400 whitespace-nowrap">{formatDate(dep.created_at)}</td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -704,6 +709,12 @@ export default function Dashboard() {
                                                 </tr>
                                             ))
                                         )}
+                                        {/* Fill empty rows to keep height stable */}
+                                        {deposits.length > 0 && deposits.length % ROWS_PER_PAGE !== 0 && depositsPage === Math.ceil(deposits.length / ROWS_PER_PAGE) && (
+                                            Array.from({ length: ROWS_PER_PAGE - (deposits.length % ROWS_PER_PAGE) }).map((_, i) => (
+                                                <tr key={`empty-${i}`} className="h-[73px] border-none"><td colSpan={5}></td></tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </>
                             ) : (
@@ -726,59 +737,95 @@ export default function Dashboard() {
                                                 </td>
                                             </tr>
                                         ) : (
-                                            (dashboardTab === 'active' ? activeOrders : historyOrders).map((order) => (
-                                                <tr key={order.order_id} className="hover:bg-white/[0.02] transition-colors">
-                                                    <td className="px-6 py-4 text-stone-300 whitespace-nowrap">{formatDate(order.created_at)}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center gap-2">
-                                                            <img src={`/icons/${getServiceIconSlug(order.service)}.svg`} className="w-4 h-4 opacity-70" alt="" onError={(e) => e.currentTarget.style.display = 'none'} />
-                                                            <span className="font-medium text-white">{order.service}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 font-mono text-stone-300 whitespace-nowrap">{order.phone}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        {order.code ? (
+                                            (dashboardTab === 'active' ? activeOrders : historyOrders)
+                                                .slice(
+                                                    dashboardTab === 'history' ? (historyPage - 1) * ROWS_PER_PAGE : 0,
+                                                    dashboardTab === 'history' ? historyPage * ROWS_PER_PAGE : undefined
+                                                )
+                                                .map((order) => (
+                                                    <tr key={order.order_id} className="hover:bg-white/[0.02] transition-colors">
+                                                        <td className="px-6 py-4 text-stone-300 whitespace-nowrap">{formatDate(order.created_at)}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="flex items-center gap-2">
+                                                                <img src={`/icons/${getServiceIconSlug(order.service)}.svg`} className="w-4 h-4 opacity-70" alt="" onError={(e) => e.currentTarget.style.display = 'none'} />
+                                                                <span className="font-medium text-white">{order.service}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 font-mono text-stone-300 whitespace-nowrap">{order.phone}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            {order.code ? (
+                                                                <button
+                                                                    onClick={() => { navigator.clipboard.writeText(order.code!); alert('Copied!'); }}
+                                                                    className="font-mono font-bold text-[var(--color-primary)] hover:underline"
+                                                                    title="Click to copy"
+                                                                >
+                                                                    {order.code}
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-stone-600 italic">---</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            {order.status === 'pending' ? (
+                                                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-yellow-500/10 text-yellow-500 text-xs font-bold">
+                                                                    <FaClock className="animate-pulse" /> Pending
+                                                                </span>
+                                                            ) : order.status === 'completed' ? (
+                                                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-green-500/10 text-green-400 text-xs font-bold">
+                                                                    <FaCheckCircle /> Completed
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs font-bold">
+                                                                    <FaTimesCircle /> {order.status}
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right whitespace-nowrap">
                                                             <button
-                                                                onClick={() => { navigator.clipboard.writeText(order.code!); alert('Copied!'); }}
-                                                                className="font-mono font-bold text-[var(--color-primary)] hover:underline"
-                                                                title="Click to copy"
+                                                                onClick={() => { setModalOrder(order); setIsModalOpen(true); }}
+                                                                className="px-3 py-1.5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors text-xs font-bold text-white"
                                                             >
-                                                                {order.code}
+                                                                Open
                                                             </button>
-                                                        ) : (
-                                                            <span className="text-stone-600 italic">---</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        {order.status === 'pending' ? (
-                                                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-yellow-500/10 text-yellow-500 text-xs font-bold">
-                                                                <FaClock className="animate-pulse" /> Pending
-                                                            </span>
-                                                        ) : order.status === 'completed' ? (
-                                                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-green-500/10 text-green-400 text-xs font-bold">
-                                                                <FaCheckCircle /> Completed
-                                                            </span>
-                                                        ) : (
-                                                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs font-bold">
-                                                                <FaTimesCircle /> {order.status}
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                                                        <button
-                                                            onClick={() => { setModalOrder(order); setIsModalOpen(true); }}
-                                                            className="px-3 py-1.5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors text-xs font-bold text-white"
-                                                        >
-                                                            Open
-                                                        </button>
-                                                    </td>
-                                                </tr>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                        )}
+                                        {/* Fill empty rows to keep height stable */}
+                                        {dashboardTab === 'history' && historyOrders.length > 0 && historyOrders.length % ROWS_PER_PAGE !== 0 && historyPage === Math.ceil(historyOrders.length / ROWS_PER_PAGE) && (
+                                            Array.from({ length: ROWS_PER_PAGE - (historyOrders.length % ROWS_PER_PAGE) }).map((_, i) => (
+                                                <tr key={`empty-h-${i}`} className="h-[73px] border-none"><td colSpan={6}></td></tr>
                                             ))
                                         )}
                                     </tbody>
                                 </>
                             )}
                         </table>
+
+                        {/* Pagination Controls */}
+                        {((dashboardTab === 'history' && historyOrders.length > ROWS_PER_PAGE) || (dashboardTab === 'deposits' && deposits.length > ROWS_PER_PAGE)) && (
+                            <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between bg-white/[0.01]">
+                                <div className="text-xs text-stone-500 font-bold uppercase tracking-wider">
+                                    Page {dashboardTab === 'history' ? historyPage : depositsPage} of {Math.ceil((dashboardTab === 'history' ? historyOrders.length : deposits.length) / ROWS_PER_PAGE)}
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        disabled={(dashboardTab === 'history' ? historyPage : depositsPage) === 1}
+                                        onClick={() => dashboardTab === 'history' ? setHistoryPage(p => p - 1) : setDepositsPage(p => p - 1)}
+                                        className="px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent text-xs font-bold transition-all"
+                                    >
+                                        Prev
+                                    </button>
+                                    <button
+                                        disabled={(dashboardTab === 'history' ? historyPage : depositsPage) === Math.ceil((dashboardTab === 'history' ? historyOrders.length : deposits.length) / ROWS_PER_PAGE)}
+                                        onClick={() => dashboardTab === 'history' ? setHistoryPage(p => p + 1) : setDepositsPage(p => p + 1)}
+                                        className="px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent text-xs font-bold transition-all"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

@@ -103,6 +103,9 @@ export default function Navbar() {
                     <Link3D href="/affiliate" className="hidden sm:block text-[10px] md:text-sm font-bold text-stone-400 hover:text-white transition-colors uppercase tracking-wide">
                         {t('nav_affiliate')}
                     </Link3D>
+                    <Link3D href="/blog" className="hidden md:block text-[10px] md:text-sm font-bold text-stone-400 hover:text-white transition-colors uppercase tracking-wide">
+                        Blog
+                    </Link3D>
 
                     {/* Language Switcher */}
                     <div className="relative">
