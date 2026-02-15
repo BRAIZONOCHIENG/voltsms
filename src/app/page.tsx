@@ -255,6 +255,7 @@ export default function Home() {
               </table>
             </div>
           </div>
+        </div>
       </section>
 
       {/* How It Works Section */}
