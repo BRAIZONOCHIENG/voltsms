@@ -4,16 +4,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaCheckCircle } from 'react-icons/fa';
 
 const ACTIVITIES = [
-    { name: "John", location: "London, UK", service: "WhatsApp", time: "34s ago" },
-    { name: "Satoshi", location: "Tokyo, JP", service: "Telegram", time: "1m ago" },
-    { name: "Elena", location: "Madrid, ES", service: "OpenAI", time: "12s ago" },
-    { name: "Michael", location: "New York, US", service: "Google", time: "45s ago" },
-    { name: "Chloe", location: "Paris, FR", service: "Tinder", time: "2m ago" },
-    { name: "David", location: "Toronto, CA", service: "Discord", time: "18s ago" },
-    { name: "Ahmed", location: "Dubai, AE", service: "WhatsApp", time: "5s ago" },
-    { name: "Luca", location: "Milan, IT", service: "Telegram", time: "24s ago" },
-    { name: "Sarah", location: "Sydney, AU", service: "Amazon", time: "1m ago" },
-    { name: "Emma", location: "Berlin, DE", service: "Instagram", time: "30s ago" },
+    { id: "User #429", region: "Europe", service: "WhatsApp", time: "34s ago" },
+    { id: "User #812", region: "Asia", service: "Telegram", time: "1m ago" },
+    { id: "User #105", region: "North America", service: "OpenAI", time: "12s ago" },
+    { id: "User #337", region: "Europe", service: "Google", time: "45s ago" },
+    { id: "User #992", region: "South America", service: "Tinder", time: "2m ago" },
+    { id: "User #214", region: "Asia", service: "Discord", time: "18s ago" },
+    { id: "User #661", region: "Middle East", service: "WhatsApp", time: "5s ago" },
+    { id: "User #448", region: "Europe", service: "Telegram", time: "24s ago" },
+    { id: "User #773", region: "Oceania", service: "Amazon", time: "1m ago" },
+    { id: "User #129", region: "Europe", service: "Instagram", time: "30s ago" },
 ];
 
 export default function LiveActivityTicker() {
@@ -22,7 +22,7 @@ export default function LiveActivityTicker() {
 
     useEffect(() => {
         // Initial delay
-        const timer = setTimeout(() => setIsVisible(true), 3000);
+        const timer = setTimeout(() => setIsVisible(true), 5000);
 
         const interval = setInterval(() => {
             setIsVisible(false);
@@ -30,7 +30,7 @@ export default function LiveActivityTicker() {
                 setIndex((prev) => (prev + 1) % ACTIVITIES.length);
                 setIsVisible(true);
             }, 1000); // Wait for exit animation
-        }, 8000); // Show each for 8 seconds
+        }, 45000); // Show each for 45 seconds (much more realistic)
 
         return () => {
             clearTimeout(timer);
@@ -54,14 +54,17 @@ export default function LiveActivityTicker() {
                         <FaCheckCircle className="text-green-400" />
                     </div>
                     <div className="flex flex-col">
-                        <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest leading-none mb-1">
-                            Recent Verification
-                        </p>
+                        <div className="flex items-center gap-2 mb-1">
+                            <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest leading-none">
+                                Recent Success
+                            </p>
+                            <span className="text-[8px] bg-white/5 text-stone-400 px-1.5 py-0.5 rounded-full border border-white/5">Privacy Protected</span>
+                        </div>
                         <p className="text-xs text-white font-medium">
-                            <span className="font-bold">{activity.name}</span> in {activity.location}
+                            <span className="font-bold">{activity.id}</span> in {activity.region}
                         </p>
                         <p className="text-[11px] text-stone-300">
-                            Verified <span className="text-purple-400 font-bold">{activity.service}</span> <span className="text-stone-500">• {activity.time}</span>
+                            Verified <span className="text-purple-400 font-bold">{activity.service}</span> <span className="text-stone-500 text-[9px]">• Physical SIM • {activity.time}</span>
                         </p>
                     </div>
                 </motion.div>
