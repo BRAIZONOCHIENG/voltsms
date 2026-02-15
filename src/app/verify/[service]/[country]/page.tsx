@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar';
 import { notFound } from 'next/navigation';
 import { COUNTRIES } from '@/app/dashboard/countries';
 import { SEO_SERVICES, SEO_COUNTRIES } from '@/app/verify/constants';
+import { SERVICES_DATA } from '@/app/dashboard/services_data';
 
 interface Props {
     params: Promise<{ service: string; country: string }>;
@@ -33,8 +34,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         return { title: 'Not Found' };
     }
 
-    const title = `Verify ${service.name} in ${country.name} - Non-VoIP SMS | VoltSMS`;
-    const description = `Get a real ${country.name} phone number for ${service.name} verification instantly. Premium Non-VoIP SIM cards. working 100% for OTP bypass.`;
+    // Find real price
+    const serviceData = SERVICES_DATA.find(s => s.id === serviceSlug || s.smspool_id?.toString() === serviceSlug);
+    const countryPrice = serviceData?.prices?.[country.code] || serviceData?.price || 1.50;
+    const priceStr = typeof countryPrice === 'number' ? `$${countryPrice.toFixed(2)}` : '$1.50';
+
+    const title = `Verify ${service.name} in ${country.name} from ${priceStr} - Non-VoIP SMS | VoltSMS`;
+    const description = `Get a real ${country.name} phone number for ${service.name} verification from only ${priceStr}. Premium Non-VoIP SIM cards for instant OTP bypass. 100% working.`;
 
     return {
         title,
@@ -44,8 +50,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             `${service.name} non voip number`,
             `bypass ${service.name} otp`,
             `${country.name} virtual number for ${service.name}`,
-            `receive sms ${country.name}`,
-            `real sim card ${country.name}`
+            `${service.name} ${country.name} sms`,
+            `real sim card ${country.name} ${service.name}`
         ],
         openGraph: {
             title,
@@ -68,6 +74,11 @@ export default async function VerifyPage({ params }: Props) {
         notFound();
     }
 
+    // Find real price for H1
+    const serviceData = SERVICES_DATA.find(s => s.id === serviceSlug || s.smspool_id?.toString() === serviceSlug);
+    const countryPrice = serviceData?.prices?.[country.code] || serviceData?.price || 1.50;
+    const priceStr = typeof countryPrice === 'number' ? `$${countryPrice.toFixed(2)}` : '$1.50';
+
     return (
         <main className="min-h-screen text-white relative overflow-hidden flex flex-col">
             <Navbar />
@@ -83,7 +94,7 @@ export default async function VerifyPage({ params }: Props) {
                 {/* Hero Section */}
                 <div className="text-center max-w-4xl mx-auto mb-16">
                     <div className="inline-block mb-6 px-6 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-green-400 font-bold text-sm uppercase tracking-widest">
-                        Available Now • Instant Delivery
+                        Available Now • Instant Delivery from {priceStr}
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-black mb-8 leading-tight">
@@ -92,12 +103,12 @@ export default async function VerifyPage({ params }: Props) {
                     </h1>
 
                     <p className="text-xl text-stone-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-                        Stop getting blocked by VoIP detection. Get a <b>Real SIM</b> number from {country.name} {country.flag} to verify {service.name} account instantly.
+                        Stop getting blocked by VoIP detection. Get a <b>Real SIM</b> number from {country.name} {country.flag} to verify {service.name} account instantly for only {priceStr}.
                         Guaranteed to receive OTP codes.
                     </p>
 
                     <Link href="/register" className="inline-flex items-center gap-4 bg-white text-black font-black text-xl px-12 py-5 rounded-full hover:scale-105 transition-transform shadow-2xl shadow-purple-500/20">
-                        <span>Get Number for {service.name}</span>
+                        <span>Get {service.name} Number ({priceStr})</span>
                         <span>→</span>
                     </Link>
                     <p className="mt-4 text-sm text-white/40 font-medium">No ID Required • Crypto Accepted</p>

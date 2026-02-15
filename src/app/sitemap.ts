@@ -36,7 +36,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // SEO Landing Pages
     const seoRoutes: MetadataRoute.Sitemap = [];
+    const hubRoutes: MetadataRoute.Sitemap = [];
+
     SEO_SERVICES.forEach((service: { slug: string; name: string }) => {
+        // Hub Page
+        hubRoutes.push({
+            url: `${baseUrl}/verify/${service.slug}`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly' as const,
+            priority: 0.95,
+        });
+
+        // Country Specific Pages
         SEO_COUNTRIES.forEach((country: string) => {
             seoRoutes.push({
                 url: `${baseUrl}/verify/${service.slug}/${country.toLowerCase()}`,
@@ -47,5 +58,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
         });
     });
 
-    return [...staticRoutes, ...blogRoutes, ...seoRoutes];
+    return [...staticRoutes, ...blogRoutes, ...hubRoutes, ...seoRoutes];
 }

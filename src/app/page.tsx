@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fa';
 import { SiTether, SiLitecoin } from 'react-icons/si';
 
+import { OrganizationSchema, WebSiteSchema, FAQSchema } from '../components/JsonLd';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Home() {
@@ -65,36 +66,27 @@ export default function Home() {
     <main className="min-h-screen text-white overflow-x-hidden relative">
       <Navbar />
 
-      {/* JSON-LD Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            "name": "VoltSMS",
-            "applicationCategory": "UtilitiesApplication",
-            "operatingSystem": "Web",
-            "offers": {
-              "@type": "Offer",
-              "price": "0.95",
-              "priceCurrency": "USD"
-            },
-            "description": "Premium Non-VoIP SMS verification service using Real SIM cards. Bypass OTP verification on Tinder, Telegram, WhatsApp, and Google safely.",
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": "4.9",
-              "ratingCount": "2540"
-            },
-            "featureList": [
-              "Real SIM Card Numbers",
-              "Non-VoIP Technology",
-              "Instant SMS Delivery",
-              "Anonymous Crypto Payments",
-              "Money Back Guarantee"
-            ]
-          })
-        }}
+      <OrganizationSchema />
+      <WebSiteSchema />
+      <FAQSchema
+        faqs={[
+          {
+            question: "Is this really Non-VoIP?",
+            answer: "Yes. We use real SIM cards from physical devices. This means our numbers work on services that block virtual numbers (VoIP) like Tinder, Telegram, and WhatsApp."
+          },
+          {
+            question: "How long does the number work?",
+            answer: "These are temporary numbers for one-time verification (OTP). The number is active for 15-20 minutes to receive your code. After that, it is closed for security."
+          },
+          {
+            question: "What if the code doesn't arrive?",
+            answer: "You don't pay. If the SMS doesn't arrive within the timeout period, the order is automatically cancelled and your credit is refunded instantly to your balance."
+          },
+          {
+            question: "Do I need ID Verification?",
+            answer: "Never. We value your privacy. No ID, no KYC, no personal details required. Just sign up and pay with Crypto."
+          }
+        ]}
       />
 
       {/* Hero Section */}
