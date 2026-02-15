@@ -117,7 +117,7 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="text-6xl md:text-8xl font-black mb-6 tracking-tighter leading-none"
+            className="text-4xl sm:text-6xl md:text-8xl font-black mb-6 tracking-tighter leading-none"
           >
             {t('hero_title').split('Verifications')[0]} <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 animate-gradient-x">
@@ -211,49 +211,50 @@ export default function Home() {
           </motion.div>
 
           <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] overflow-hidden">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="px-8 py-8 text-stone-500 font-bold uppercase tracking-widest text-xs">Features</th>
-                  <th className="px-8 py-8 text-white font-black text-center text-lg">
-                    <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Real SIM</span>
-                    <br /><span className="text-[10px] text-stone-500 font-bold uppercase">(Non-VoIP)</span>
-                  </th>
-                  <th className="px-8 py-8 text-stone-500 font-black text-center text-lg">
-                    Virtual
-                    <br /><span className="text-[10px] text-stone-700 font-bold uppercase">(VoIP)</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {[
-                  { f: "Physical SIM card in a real hardware hub", rs: true, v: false },
-                  { f: "Recognized as a legitimate mobile user", rs: true, v: false },
-                  { f: "Bypasses strict VoIP/Virtual filters", rs: true, v: false },
-                  { f: "Private numbers, not publicly accessible", rs: true, v: false },
-                  { f: "Acceptable for WhatsApp, Google, Tinder", rs: true, v: false },
-                  { f: "Works where free numbers fail 100%", rs: true, v: false },
-                ].map((row, i) => (
-                  <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-8 py-6 text-stone-300 font-medium text-sm md:text-base">{row.f}</td>
-                    <td className="px-8 py-6 text-center">
-                      <div className="flex items-center justify-center">
-                        <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center">
-                          <FaCheckCircle className="text-green-500 text-xs" />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <div className="flex items-center justify-center">
-                        <span className="text-stone-700 font-bold">—</span>
-                      </div>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="px-8 py-8 text-stone-500 font-bold uppercase tracking-widest text-xs">Features</th>
+                    <th className="px-8 py-8 text-white font-black text-center text-lg">
+                      <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Real SIM</span>
+                      <br /><span className="text-[10px] text-stone-500 font-bold uppercase">(Non-VoIP)</span>
+                    </th>
+                    <th className="px-8 py-8 text-stone-500 font-black text-center text-lg">
+                      Virtual
+                      <br /><span className="text-[10px] text-stone-700 font-bold uppercase">(VoIP)</span>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {[
+                    { f: "Physical SIM card in a real hardware hub", rs: true, v: false },
+                    { f: "Recognized as a legitimate mobile user", rs: true, v: false },
+                    { f: "Bypasses strict VoIP/Virtual filters", rs: true, v: false },
+                    { f: "Private numbers, not publicly accessible", rs: true, v: false },
+                    { f: "Acceptable for WhatsApp, Google, Tinder", rs: true, v: false },
+                    { f: "Works where free numbers fail 100%", rs: true, v: false },
+                  ].map((row, i) => (
+                    <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="px-8 py-6 text-stone-300 font-medium text-sm md:text-base">{row.f}</td>
+                      <td className="px-8 py-6 text-center">
+                        <div className="flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center">
+                            <FaCheckCircle className="text-green-500 text-xs" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 text-center">
+                        <div className="flex items-center justify-center">
+                          <span className="text-stone-700 font-bold">—</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
       </section>
 
       {/* How It Works Section */}

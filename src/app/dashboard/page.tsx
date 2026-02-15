@@ -664,7 +664,7 @@ export default function Dashboard() {
                     </div>
 
                     <div className="p-0 overflow-x-auto min-h-[460px] flex flex-col justify-between">
-                        <table className="w-full text-left text-sm">
+                        <table className="w-full text-left text-sm min-w-[700px]">
                             {dashboardTab === 'deposits' ? (
                                 <>
                                     <thead className="text-stone-500 font-bold uppercase text-xs bg-white/[0.02]">
