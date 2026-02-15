@@ -145,6 +145,10 @@ export default function UserManagement() {
                                                 <span className="select-all opacity-70 group-hover:opacity-100 transition-opacity">{user.id}</span>
                                             </div>
                                             <div className="text-[10px] text-stone-400 font-mono flex items-center gap-2">
+                                                <span className="text-stone-600 bg-black/20 px-1 rounded">REF:</span>
+                                                <span className="select-all opacity-70 group-hover:opacity-100 transition-opacity text-purple-400 font-bold">{user.referral_code || '---'}</span>
+                                            </div>
+                                            <div className="text-[10px] text-stone-400 font-mono flex items-center gap-2">
                                                 <span className="text-stone-600 bg-black/20 px-1 rounded">IP:</span>
                                                 <span className="select-all opacity-70 border-b border-white/5">{user.registration_ip}</span>
                                             </div>

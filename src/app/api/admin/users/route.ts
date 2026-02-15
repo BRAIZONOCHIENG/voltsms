@@ -74,16 +74,29 @@ export async function POST(req: NextRequest) {
             const currentVal = currentDb?.balance ?? 0;
             const adjustment = balance - currentVal;
 
-            if (adjustment !== 0) {
-                // 2. Use atomic increment RPC to avoid interfering with parallel deposits
-                const { error: rpcError } = await supabaseAdmin.rpc('increment_balance', {
-                    target_user_id: userId,
-                    amount: adjustment
-                });
-                error = rpcError;
+            if (adjustment !== 0 || !currentDb) {
+                // 2. Use atomic increment RPC or upsert
+                // If the record exists, use RPC for safety
+                if (currentDb) {
+                    const { error: rpcError } = await supabaseAdmin.rpc('increment_balance', {
+                        target_user_id: userId,
+                        amount: adjustment
+                    });
+                    error = rpcError;
+                } else {
+                    // Create the record if it doesn't exist
+                    const { error: upsertError } = await supabaseAdmin
+                        .from('users')
+                        .upsert({
+                            user_id: userId,
+                            balance: balance,
+                            is_banned: false
+                        });
+                    error = upsertError;
+                }
 
                 // 3. Log the manual adjustment in transactions
-                if (!rpcError) {
+                if (!error) {
                     await supabaseAdmin.from('transactions').insert({
                         user_id: userId,
                         type: 'admin_edit',
@@ -100,8 +113,10 @@ export async function POST(req: NextRequest) {
         if (is_banned !== undefined) {
             const { error: banError } = await supabaseAdmin
                 .from('users')
-                .update({ is_banned })
-                .eq('user_id', userId);
+                .upsert({
+                    user_id: userId,
+                    is_banned
+                }, { onConflict: 'user_id' });
             error = error || banError;
         }
 

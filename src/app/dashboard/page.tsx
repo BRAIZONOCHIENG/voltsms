@@ -324,8 +324,8 @@ export default function Dashboard() {
 
         // 3. Pricing & Verification Type Logic
         items = items.map(s => {
-            // Apply Voice Pricing override if needed
-            if (verificationMethod === 'voice') {
+            // Apply Voice Pricing override if needed (except for Service Not Listed)
+            if (verificationMethod === 'voice' && s.id !== '9999') {
                 return { ...s, price: 2.50 };
             }
             return s;
@@ -370,7 +370,7 @@ export default function Dashboard() {
             const token = session.access_token; // Always use fresh token
             if (!token) return;
 
-            const finalPrice = verificationMethod === 'voice' ? 2.50 : (dynamicPrice || selectedService.price);
+            const finalPrice = (verificationMethod === 'voice' && selectedService.id !== '9999') ? 2.50 : (dynamicPrice || selectedService.price);
             const res = await fetch('/api/buy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },

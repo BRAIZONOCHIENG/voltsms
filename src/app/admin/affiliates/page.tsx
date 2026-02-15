@@ -22,43 +22,57 @@ export default function AdminAffiliates() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. Fetch Affiliates
-      const { data: affs } = await supabase
-        .from("affiliate_profiles")
-        .select("*")
-        .order("total_earned", { ascending: false });
-      setAffiliates(affs || []);
-
-      // 2. Fetch Commissions (Pending & Approved)
-      const { data: comms } = await supabase
-        .from("affiliate_commissions")
-        .select("*")
-        .in("status", ["pending", "approved"])
-        .order("created_at", { ascending: false });
-      setCommissions(comms || []);
-
-      setLoading(false);
+      try {
+        const res = await fetch('/api/admin/affiliates');
+        const data = await res.json();
+        if (data.success) {
+          setAffiliates(data.affiliates || []);
+          setCommissions(data.commissions || []);
+        } else {
+          console.error("API Error:", data.error);
+        }
+      } catch (err) {
+        console.error("Fetch Error:", err);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, []);
 
   const handleApprove = async (id: string) => {
-    const { error } = await supabase
-      .from("affiliate_commissions")
-      .update({ status: "approved" })
-      .eq("id", id);
-    if (!error) {
-      setCommissions(commissions.filter((c) => c.id !== id));
+    try {
+      const res = await fetch('/api/admin/affiliates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve', id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCommissions(prev => prev.filter((c) => c.id !== id));
+      } else {
+        alert("Error approving: " + data.error);
+      }
+    } catch (err: any) {
+      alert("Error: " + err.message);
     }
   };
 
   const handleReject = async (id: string) => {
-    const { error } = await supabase
-      .from("affiliate_commissions")
-      .update({ status: "rejected" })
-      .eq("id", id);
-    if (!error) {
-      setCommissions(commissions.filter((c) => c.id !== id));
+    try {
+      const res = await fetch('/api/admin/affiliates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject', id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCommissions(prev => prev.filter((c) => c.id !== id));
+      } else {
+        alert("Error rejecting: " + data.error);
+      }
+    } catch (err: any) {
+      alert("Error: " + err.message);
     }
   };
 
@@ -96,40 +110,32 @@ export default function AdminAffiliates() {
     }
 
     try {
-      // 1. Create payout record
-      const { error: payoutError } = await supabase
-        .from("affiliate_payouts")
-        .insert([
-          {
-            affiliate_id: affiliate.id,
-            amount_usd: amount,
-            payout_method: method,
-            payout_details: details,
-            status: "paid",
-          },
-        ]);
-
-      if (payoutError) throw payoutError;
-
-      // 2. Update total_withdrawn
-      const { error: updateError } = await supabase
-        .from("affiliate_profiles")
-        .update({
-          total_withdrawn: Number(affiliate.total_withdrawn) + amount,
+      const res = await fetch('/api/admin/affiliates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'payout',
+          affiliate_id: affiliate.id,
+          amount,
+          method,
+          details,
+          total_withdrawn: affiliate.total_withdrawn
         })
-        .eq("id", affiliate.id);
+      });
+      const data = await res.json();
 
-      if (updateError) throw updateError;
-
-      // Refresh data
-      setAffiliates(
-        affiliates.map((a) =>
-          a.id === affiliate.id
-            ? { ...a, total_withdrawn: Number(a.total_withdrawn) + amount }
-            : a,
-        ),
-      );
-      alert("Payout processed successfully!");
+      if (data.success) {
+        setAffiliates(prev =>
+          prev.map((a) =>
+            a.id === affiliate.id
+              ? { ...a, total_withdrawn: Number(a.total_withdrawn) + amount }
+              : a,
+          )
+        );
+        alert("Payout processed successfully!");
+      } else {
+        alert("Error: " + data.error);
+      }
     } catch (err: any) {
       alert("Error processing payout: " + err.message);
     }
@@ -280,6 +286,7 @@ export default function AdminAffiliates() {
               <tr>
                 <th className="px-6 py-4">Partner Info</th>
                 <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Referrals</th>
                 <th className="px-6 py-4">Payout Method</th>
                 <th className="px-6 py-4">Frequency</th>
                 <th className="px-6 py-4">Earnings</th>
@@ -303,6 +310,14 @@ export default function AdminAffiliates() {
                     >
                       {a.status}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-stone-300 font-bold border border-white/10">
+                        {a.referral_count || 0}
+                      </div>
+                      <span className="text-[10px] text-stone-500 uppercase font-black">Users</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     {a.payout_method === "paypal" ? (

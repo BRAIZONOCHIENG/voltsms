@@ -10,6 +10,14 @@ import { Service } from './services';
 
 export const SERVICES_DATA: Service[] = [
     {
+        "id": "9999",
+        "name": "Service Not Listed",
+        "prices": {
+            "GLOBAL": 0.95
+        },
+        "category": "Other"
+    },
+    {
         "id": "aliexpress",
         "name": "Aliexpress",
         "prices": {

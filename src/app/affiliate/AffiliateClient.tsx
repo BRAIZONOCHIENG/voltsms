@@ -159,6 +159,7 @@ export default function AffiliateClient() {
   const handleSaveSettings = async () => {
     setSaving(true);
     setSaveStatus(null);
+    console.log("[AffiliateClient] Saving settings...", { payoutMethod, payoutFrequency, paypalEmail, cryptoAddress, cryptoCurrency });
     try {
       const updatePayload: any = {
         payout_method: payoutMethod,
@@ -174,10 +175,16 @@ export default function AffiliateClient() {
         .update(updatePayload)
         .eq("user_id", user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("[AffiliateClient] Update Error:", error);
+        throw error;
+      }
+
+      console.log("[AffiliateClient] Settings saved successfully.");
       setAffiliateProfile((prev: any) => ({ ...prev, ...updatePayload }));
       setSaveStatus({ type: "success", msg: "Settings updated successfully!" });
     } catch (err: any) {
+      console.error("[AffiliateClient] Catch Error:", err);
       setSaveStatus({
         type: "error",
         msg: err.message || "Failed to update settings",
