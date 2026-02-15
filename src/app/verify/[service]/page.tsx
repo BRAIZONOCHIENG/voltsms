@@ -65,13 +65,24 @@ export default async function ServiceHubPage({ params }: Props) {
 
             <div className="container mx-auto px-4 py-20 relative z-10 flex-1">
                 <div className="max-w-4xl mx-auto text-center mb-20">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="inline-block mb-6 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-purple-400 font-bold text-xs uppercase tracking-widest"
-                    >
-                        Real SIM Verification Hub
-                    </motion.div>
+                    <div className="flex flex-col items-center gap-4 mb-6">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-purple-400 font-bold text-xs uppercase tracking-widest"
+                        >
+                            Real SIM Verification Hub
+                        </motion.div>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-[9px] font-black uppercase tracking-tighter text-green-400">
+                                <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse"></span>
+                                99.8% Success Rate
+                            </div>
+                            <div className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[9px] font-black uppercase tracking-tighter text-blue-400">
+                                Physical SIM Only
+                            </div>
+                        </div>
+                    </div>
                     <h1 className="text-5xl md:text-7xl font-black mb-8 leading-tight tracking-tighter">
                         Non-VoIP <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">{service.name}</span> Numbers
                     </h1>
