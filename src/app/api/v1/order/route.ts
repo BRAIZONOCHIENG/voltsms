@@ -84,8 +84,8 @@ export async function POST(req: NextRequest) {
         let order;
         try {
             // Mapping handled by client internally now.
-            // We pass '1' (High Success) and the user's selling price as maxPrice.
-            const result = await GrizzlySMSClient.purchaseNumber(serviceId, country, 1, price);
+            // We pass '1' (High Success) and revert to 1.00 max_price for speed and stability.
+            const result = await GrizzlySMSClient.purchaseNumber(serviceId, country, 1, 1.0);
             if (result) {
                 order = {
                     orderId: result.order_id,

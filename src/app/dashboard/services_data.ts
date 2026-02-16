@@ -13,10 +13,10 @@ export const SERVICES_DATA: Service[] = [
         "id": "9999",
         "name": "Service Not Listed",
         "prices": {
-            "GLOBAL": 0.95
+            "GLOBAL": 1.25
         },
         "category": "Other",
-        "price": 0.95
+        "price": 1.25
     },
     {
         "id": "aliexpress",

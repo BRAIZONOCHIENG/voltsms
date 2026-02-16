@@ -170,13 +170,13 @@ export async function POST(req: Request) {
             console.log(`[Buy API] SMSPool Purchase: service=${smspoolService} (${serviceLower}), country=${smspoolCountry} (${country})`);
 
             try {
-                // To ensure 0% risk of loss, we set max_price to the exact amount the user paid us.
-                // This ensures we never pay the provider more than we received.
-                order = await smsClient.purchaseNumber(smspoolService, smspoolCountry, '1', price);
+                // Reverting to static $1.00 limit as per user request.
+                // pricing_option: '1' ensures we always fetch the highest quality number.
+                order = await smsClient.purchaseNumber(smspoolService, smspoolCountry, '1', 1.00);
             } catch (e: any) {
                 console.error("SMSPool Purchase Error:", e.message || e);
                 return NextResponse.json({
-                    error: 'Service unavailable. Please try a different country.'
+                    error: "no numbers available for this country at the moment, try again later or choose a different country"
                 }, { status: 503 });
             }
         }
