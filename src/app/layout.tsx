@@ -84,7 +84,6 @@ import Footer from "../components/Footer";
 import { AnimatedBackground } from "../components/AnimatedBackground";
 import { OrganizationSchema, WebSiteSchema } from "../components/JsonLd";
 import { Web3ModalProvider } from "../context/Web3ModalProvider";
-import LiveActivityTicker from "../components/LiveActivityTicker";
 
 import { LanguageProvider } from "../context/LanguageContext";
 
@@ -109,7 +108,6 @@ export default function RootLayout({
             <div className="relative z-10">
               <Footer />
             </div>
-            <LiveActivityTicker />
           </Web3ModalProvider>
         </LanguageProvider>
       </body>

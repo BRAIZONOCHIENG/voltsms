@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import { MagneticButton } from '../../components/MagneticButton';
-import LiveActivityTicker from '../../components/LiveActivityTicker';
 import {
     FaGlobe, FaBolt, FaCheckCircle, FaMobileAlt, FaSms, FaUserPlus,
     FaWallet, FaShieldAlt, FaChevronDown, FaUsers,
@@ -61,7 +60,6 @@ export default function DirectSmsPage() {
     return (
         <main className="min-h-screen text-white overflow-x-hidden relative bg-[#050505]">
             <Navbar />
-            <LiveActivityTicker />
 
             {/* Ambient Background Elements */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none z-0">
@@ -70,7 +68,7 @@ export default function DirectSmsPage() {
             </div>
 
             {/* Hero / Direct Intent Section - Reduced padding-top to bring it closer to Navbar */}
-            <section className="pt-24 pb-16 px-4 relative z-10">
+            <section className="pt-12 pb-16 px-4 relative z-10">
                 <div className="container mx-auto max-w-6xl">
                     <div className="grid lg:grid-cols-2 gap-16 items-center">
                         <motion.div
