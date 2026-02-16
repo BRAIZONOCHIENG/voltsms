@@ -6,12 +6,10 @@ import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import { MagneticButton } from '../../components/MagneticButton';
 import LiveActivityTicker from '../../components/LiveActivityTicker';
-import { FaShieldAlt, FaGlobalAfricas, FaBolt, FaCheckCircle, FaLock } from 'react-icons/fa';
+import { FaGlobe, FaBolt, FaCheckCircle, FaMobileAlt } from 'react-icons/fa';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function PrivacyUtilityPage() {
-    const { t } = useLanguage();
-
+export default function DirectSmsPage() {
     return (
         <main className="min-h-screen text-white overflow-x-hidden relative bg-[#050505]">
             <Navbar />
@@ -23,7 +21,7 @@ export default function PrivacyUtilityPage() {
                 <div className="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] bg-purple-600/10 rounded-full blur-[100px] animate-pulse"></div>
             </div>
 
-            {/* Hero / Ad Landing Section */}
+            {/* Hero / Direct Intent Section */}
             <section className="pt-32 pb-20 px-4 relative z-10">
                 <div className="container mx-auto max-w-6xl">
                     <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -32,43 +30,43 @@ export default function PrivacyUtilityPage() {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-stone-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-8">
-                                <FaShieldAlt className="text-blue-400" /> Authorized Identity Utility
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-8">
+                                <FaMobileAlt /> Direct Carrier SIM Network
                             </div>
 
                             <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter leading-[0.9] text-white">
-                                Secure Your <br />
+                                Global App <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-                                    Digital Presence
+                                    Activation Hub
                                 </span>
                             </h1>
 
-                            <p className="text-xl text-stone-400 mb-10 leading-relaxed font-light max-w-lg">
-                                Access global platforms securely. Our enterprise-grade utility provides real-carrier identity verification for absolute privacy and 100% success rates.
+                            <p className="text-xl text-stone-300 mb-10 leading-relaxed font-light max-w-lg">
+                                Instantly verify any website or app worldwide. Get real-carrier Non-VoIP phone numbers from USA, UK, and 150+ countries. 100% success rate guaranteed.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-6">
                                 <Link href="/register">
                                     <MagneticButton className="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-lg shadow-[0_20px_40px_rgba(37,99,235,0.3)] transition-all active:scale-95 flex items-center gap-3">
-                                        Activate Utility Account <span className="text-xl">→</span>
+                                        Get Your Number Now <span className="text-xl">→</span>
                                     </MagneticButton>
                                 </Link>
                             </div>
 
                             <div className="mt-12 flex items-center gap-8 text-stone-500">
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-white font-black text-2xl leading-none">99.8%</span>
-                                    <span className="text-[10px] uppercase tracking-widest font-bold">Uptime Rate</span>
+                                    <span className="text-white font-black text-2xl leading-none">500+</span>
+                                    <span className="text-[10px] uppercase tracking-widest font-bold">Services Supported</span>
                                 </div>
                                 <div className="w-px h-8 bg-white/10"></div>
                                 <div className="flex flex-col gap-1">
                                     <span className="text-white font-black text-2xl leading-none">Instant</span>
-                                    <span className="text-[10px] uppercase tracking-widest font-bold">Delivery</span>
+                                    <span className="text-[10px] uppercase tracking-widest font-bold">Code Delivery</span>
                                 </div>
                                 <div className="w-px h-8 bg-white/10"></div>
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-white font-black text-2xl leading-none">Private</span>
-                                    <span className="text-[10px] uppercase tracking-widest font-bold">Encryption</span>
+                                    <span className="text-white font-black text-2xl leading-none">Real SIM</span>
+                                    <span className="text-[10px] uppercase tracking-widest font-bold">Connections</span>
                                 </div>
                             </div>
                         </motion.div>
@@ -82,9 +80,9 @@ export default function PrivacyUtilityPage() {
                             <div className="relative z-10 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl bg-black/40 backdrop-blur-3xl aspect-[16/9]">
                                 <Image
                                     src="/ad-assets/phone-mockup.png"
-                                    alt="Secure Verification Utility"
+                                    alt="Direct Activation Utility"
                                     fill
-                                    className="object-cover opacity-90 group-hover:scale-110 transition-transform duration-700"
+                                    className="object-cover opacity-90 transition-transform duration-700 hover:scale-105"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                                 <div className="absolute bottom-6 left-6 right-6 p-6 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10">
@@ -93,68 +91,61 @@ export default function PrivacyUtilityPage() {
                                             <FaCheckCircle className="text-green-400" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-bold text-white uppercase tracking-widest">Utility Status: Active</p>
-                                            <p className="text-[10px] text-stone-400">Encrypted transmission established via 4G/LTE</p>
+                                            <p className="text-xs font-bold text-white uppercase tracking-widest">Network: Real-Carrier SIM</p>
+                                            <p className="text-[10px] text-stone-400">Direct access to physical hardware verified</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Floating Decorative Assets */}
-                            <motion.div
-                                animate={{ y: [0, -10, 0] }}
-                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                                className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl z-0"
-                            ></motion.div>
                         </motion.div>
                     </div>
                 </div>
             </section>
 
-            {/* Secondary Trust Features */}
+            {/* Core Value Pillars */}
             <section className="py-20 border-y border-white/5 bg-white/[0.02]">
                 <div className="container mx-auto px-4">
                     <div className="grid md:grid-cols-3 gap-12">
                         <div className="flex flex-col gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                                <FaLock className="text-blue-400 text-xl" />
+                                <FaBolt className="text-blue-400 text-xl" />
                             </div>
-                            <h3 className="text-xl font-bold">End-to-End Privacy</h3>
-                            <p className="text-stone-400 text-sm leading-relaxed">No logs. No personal data. Your utility access is encrypted and anonymous at every level.</p>
+                            <h3 className="text-xl font-bold">Lightning Fast</h3>
+                            <p className="text-stone-400 text-sm leading-relaxed">Receive your OTP codes in seconds. Our automated system routes your request direct to the SIM array.</p>
                         </div>
                         <div className="flex flex-col gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                                <FaGlobalAfricas className="text-purple-400 text-xl" />
+                            <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center border border-green-500/20">
+                                <FaCheckCircle className="text-green-400 text-xl" />
                             </div>
-                            <h3 className="text-xl font-bold">Global Carrier Network</h3>
-                            <p className="text-stone-400 text-sm leading-relaxed">Access physical SIM networks across 150+ countries. Real hardware, real reliability.</p>
+                            <h3 className="text-xl font-bold">100% Success Rate</h3>
+                            <p className="text-stone-400 text-sm leading-relaxed">By using real physical SIM cards, we guarantee success on platforms that block virtual/VoIP numbers.</p>
                         </div>
                         <div className="flex flex-col gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
-                                <FaBolt className="text-cyan-400 text-xl" />
+                                <FaGlobe className="text-cyan-400 text-xl" />
                             </div>
-                            <h3 className="text-xl font-bold">Accelerated Processing</h3>
-                            <p className="text-stone-400 text-sm leading-relaxed">Verification codes delivered in sub-30 seconds via our ultra-low latency routing architecture.</p>
+                            <h3 className="text-xl font-bold">Worldwide Coverage</h3>
+                            <p className="text-stone-400 text-sm leading-relaxed">Choose from over 150 countries. Whether it's USA, UK, or Europe, we've got you covered.</p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Visual Proof Section */}
+            {/* Infrastructure Proof */}
             <section className="py-20 px-4">
                 <div className="container mx-auto max-w-4xl text-center">
-                    <h2 className="text-3xl font-black mb-12 uppercase tracking-tight">Enterprise Infrastructure</h2>
+                    <h2 className="text-3xl font-black mb-12 uppercase tracking-tight">Direct Carrier Hardware</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="relative h-64 rounded-3xl overflow-hidden border border-white/10 group">
-                            <Image src="/ad-assets/sim-cards.png" alt="Physical Infrastructure" fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                            <Image src="/ad-assets/sim-cards.png" alt="Physical SIM Arrays" fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="text-xs font-bold uppercase tracking-[0.3em]">Carrier Grade SIM Arrays</span>
+                                <span className="text-xs font-bold uppercase tracking-[0.3em]">Real Physical SIM Infrastructure</span>
                             </div>
                         </div>
                         <div className="relative h-64 rounded-3xl overflow-hidden border border-white/10 group">
-                            <Image src="/ad-assets/success-checkmark.png" alt="Success Guaranteed" fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                            <Image src="/ad-assets/success-checkmark.png" alt="Verification Success" fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="text-xs font-bold uppercase tracking-[0.3em] font-mono">100% Callback Success</span>
+                                <span className="text-xs font-bold uppercase tracking-[0.3em] font-mono">Guaranteed App Activation</span>
                             </div>
                         </div>
                     </div>
@@ -163,17 +154,17 @@ export default function PrivacyUtilityPage() {
                         <Link href="/register">
                             <div className="inline-block p-[2px] rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600">
                                 <MagneticButton className="px-16 py-6 bg-black rounded-[0.9rem] text-2xl font-black hover:bg-transparent transition-colors">
-                                    GET STARTED NOW
+                                    START ACTIVATION NOW
                                 </MagneticButton>
                             </div>
                         </Link>
-                        <p className="mt-6 text-stone-500 text-xs font-bold uppercase tracking-widest">No Commitment • Immediate Setup</p>
+                        <p className="mt-6 text-stone-500 text-xs font-bold uppercase tracking-widest">Instant Setup • No ID Required</p>
                     </div>
                 </div>
             </section>
 
             <footer className="py-10 border-t border-white/5 text-center text-stone-600 text-[10px] uppercase tracking-widest">
-                VoltSMS &copy; 2026 • Secure Identity Utility Platform • All Rights Reserved
+                VoltSMS &copy; 2026 • Direct Global Activation Hub • All Rights Reserved
             </footer>
         </main>
     );
