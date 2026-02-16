@@ -170,10 +170,9 @@ export async function POST(req: Request) {
             console.log(`[Buy API] SMSPool Purchase: service=${smspoolService} (${serviceLower}), country=${smspoolCountry} (${country})`);
 
             try {
-                // We set a max_price of $3.00 to support high-cost countries (e.g., Brazil).
-                // Our frontend selling price is usually cost + $0.80 or similar, but we want to allow 
-                // higher cost services to work as long as the user's balance covers it.
-                order = await smsClient.purchaseNumber(smspoolService, smspoolCountry, '1', 3.00);
+                // To ensure 0% risk of loss, we set max_price to the exact amount the user paid us.
+                // This ensures we never pay the provider more than we received.
+                order = await smsClient.purchaseNumber(smspoolService, smspoolCountry, '1', price);
             } catch (e: any) {
                 console.error("SMSPool Purchase Error:", e.message || e);
                 return NextResponse.json({

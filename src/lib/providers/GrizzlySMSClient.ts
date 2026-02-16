@@ -109,7 +109,7 @@ export class GrizzlySMSClient {
         }
     }
 
-    static async purchaseNumber(serviceId: string, countryCode: string, pricing_option: number = 1): Promise<{ order_id: string; number: string; price?: number } | null> {
+    static async purchaseNumber(serviceId: string, countryCode: string, pricing_option: number = 1, maxPrice?: number): Promise<{ order_id: string; number: string; price?: number } | null> {
         try {
             const key = this.getApiKey();
             if (!key) throw new Error("Missing API Key");
@@ -125,15 +125,21 @@ export class GrizzlySMSClient {
                 throw new Error("NO_BALANCE");
             }
 
+            const queryParams: any = {
+                api_key: key,
+                action: 'getNumber',
+                service: mappedService,
+                country: mappedCountry,
+                setting: 'smspool',
+                pricing_option: pricing_option // 1 = Highest Success, 0 = Default (Cheapest)
+            };
+
+            if (maxPrice !== undefined) {
+                queryParams.max_price = maxPrice;
+            }
+
             const response = await axios.get(API_URL, {
-                params: {
-                    api_key: key,
-                    action: 'getNumber',
-                    service: mappedService,
-                    country: mappedCountry,
-                    setting: 'smspool',
-                    pricing_option: pricing_option // 1 = Highest Success, 0 = Default (Cheapest)
-                }
+                params: queryParams
             });
 
             // Response: ACCESS_NUMBER:$id:$number
