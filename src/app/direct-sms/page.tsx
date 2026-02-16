@@ -8,7 +8,7 @@ import { MagneticButton } from '../../components/MagneticButton';
 import LiveActivityTicker from '../../components/LiveActivityTicker';
 import {
     FaGlobe, FaBolt, FaCheckCircle, FaMobileAlt, FaSms, FaUserPlus,
-    FaWallet, FaShieldAlt, FaGlobalAfricas, FaChevronDown, FaUsers,
+    FaWallet, FaShieldAlt, FaChevronDown, FaUsers,
     FaMoneyBillWave, FaFire, FaTelegramPlane, FaWhatsapp, FaGoogle,
     FaFacebookF, FaInstagram, FaDiscord, FaUber, FaTwitter,
     FaSnapchatGhost, FaTiktok, FaRobot
