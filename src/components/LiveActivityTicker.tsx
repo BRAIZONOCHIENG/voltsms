@@ -54,17 +54,14 @@ export default function LiveActivityTicker() {
                         <FaCheckCircle className="text-green-400" />
                     </div>
                     <div className="flex flex-col">
-                        <div className="flex items-center gap-2 mb-1">
-                            <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest leading-none">
-                                Recent Success
-                            </p>
-                            <span className="text-[8px] bg-white/5 text-stone-400 px-1.5 py-0.5 rounded-full border border-white/5">Privacy Protected</span>
-                        </div>
+                        <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest leading-none mb-1">
+                            Recent Success
+                        </p>
                         <p className="text-xs text-white font-medium">
                             <span className="font-bold">{activity.id}</span> in {activity.region}
                         </p>
                         <p className="text-[11px] text-stone-300">
-                            Verified <span className="text-purple-400 font-bold">{activity.service}</span> <span className="text-stone-500 text-[9px]">• Physical SIM • {activity.time}</span>
+                            Verified <span className="text-purple-400 font-bold">{activity.service}</span> <span className="text-stone-500 text-[10px]">• {activity.time}</span>
                         </p>
                     </div>
                 </motion.div>
