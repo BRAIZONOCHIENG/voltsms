@@ -24,12 +24,16 @@ export async function POST(req: Request) {
         }
 
         const payload = JSON.parse(body);
-        const { payment_status, pay_amount, pay_currency, order_id, actually_paid, price_amount } = payload;
+        const { payment_status, pay_amount, pay_currency, order_id, actually_paid, price_amount, payment_id } = payload;
 
-        console.log(`[NOWPayments Webhook] Received status: ${payment_status} for ${order_id}`);
+        console.log(`[NOWPayments Webhook] Received Event:
+            - Status: ${payment_status}
+            - Payment ID: ${payment_id}
+            - Order ID: ${order_id}`);
 
         // Only process finished/confirmed payments
         if (payment_status !== 'finished' && payment_status !== 'confirmed') {
+            console.log(`[NOWPayments Webhook] Skipping non-final status: ${payment_status}`);
             return NextResponse.json({ ok: true });
         }
 
@@ -49,10 +53,11 @@ export async function POST(req: Request) {
         const { data: existing } = await supabase
             .from('volt_splitter_payments')
             .select('id')
-            .eq('tx_hash', payload.payment_id) // Using payment_id as reference
+            .eq('tx_hash', payment_id)
             .single();
 
         if (existing) {
+            console.log(`[NOWPayments Webhook] Already processed: ${payment_id}`);
             return NextResponse.json({ ok: true });
         }
 
@@ -60,19 +65,21 @@ export async function POST(req: Request) {
         const requestedPrice = parseFloat(price_amount);
         const requestedCrypto = parseFloat(pay_amount);
         const paidCrypto = parseFloat(actually_paid);
-        const incomingAmount = payload.outcome_amount || payload.actually_paid || 0;
+
+        // Safety: outcome_amount is the amount received AFTER NOWPayments fees.
+        // If not present, we fall back to actually_paid.
+        const incomingAmount = parseFloat(payload.outcome_amount || payload.actually_paid || "0");
 
         // actualUsd = fraction of requested crypto sent * requested price
+        // This handles over/under payments correctly.
         let usdValue = (paidCrypto / requestedCrypto) * requestedPrice;
         usdValue = Math.round(usdValue * 100) / 100;
 
-        console.log(`[NOWPayments Webhook] Processing Transaction:
+        console.log(`[NOWPayments Webhook] Processing Confirmed Payment:
             - USD Value: $${usdValue}
-            - BNB Received: ${incomingAmount} ${pay_currency}`);
+            - Net Crypto Received: ${incomingAmount} ${pay_currency}`);
 
-        // 4. INSTANT SPLIT: Forward 28% to SMSPool (ALWAYS happens for confirmed payments)
-        // SAFETY: We use 'outcome_amount' (the exact BNB received for THIS transaction)
-        // to calculate the 28%. We NEVER send the full wallet balance.
+        // 4. INSTANT SPLIT: Forward 28% to SMSPool
         try {
             const hotWalletPrivateKey = process.env.HOT_WALLET_PRIVATE_KEY as `0x${string}`;
             if (!hotWalletPrivateKey) throw new Error('Missing Hot Wallet Key');
@@ -88,17 +95,17 @@ export async function POST(req: Request) {
             const forwardWei = (receivedWei * 28n) / 100n;
 
             if (forwardWei > 0n) {
-                // Forward ONLY the calculated 28%, protecting your 72% profit in the wallet
+                console.log(`[NOWPayments Webhook] Initiating 28% split (${forwardWei} wei) to ${SMSPOOL_ADDRESS}`);
                 const fTx = await client.sendTransaction({
                     to: SMSPOOL_ADDRESS,
                     value: forwardWei
                 });
-                console.log(`[NOWPayments Webhook] Success: 28% forwarded. Tx: ${fTx}`);
+                console.log(`[NOWPayments Webhook] Split Success: ${fTx}`);
 
                 // Log the record for internal tracking
                 await supabase.from('volt_splitter_payments').insert({
                     user_id: userId,
-                    tx_hash: payload.payment_id,
+                    tx_hash: payment_id,
                     amount_crypto: incomingAmount.toString(),
                     amount_usd: usdValue,
                     token_address: 'BNB_BSC',
@@ -108,13 +115,13 @@ export async function POST(req: Request) {
                     notes: usdValue < 3 ? 'PROFIT-ONLY: Sub-min deposit split but not credited.' : 'Auto-Split 28/72'
                 });
             }
-        } catch (splitErr) {
-            console.error('[NOWPayments Webhook] Split forwarding failed:', splitErr);
-            // We proceed to crediting logic if splitting failed (though ideally split happens first)
+        } catch (splitErr: any) {
+            console.error('[NOWPayments Webhook] Split forwarding failed:', splitErr.message || splitErr);
         }
 
         // 5. User Crediting (ONLY if >= $3)
         if (usdValue >= 3) {
+            console.log(`[NOWPayments Webhook] Crediting user ${userId} with $${usdValue}`);
             const { error: creditError } = await supabase.rpc('increment_balance', {
                 target_user_id: userId,
                 amount: usdValue
@@ -127,18 +134,20 @@ export async function POST(req: Request) {
                     amount: usdValue,
                     currency: 'CRYPTO_NP',
                     status: 'completed',
-                    description: `Deposit via NOWPayments (${pay_currency.toUpperCase()}) - Actual Amount Paid`,
-                    reference: payload.payment_id
+                    description: `Deposit via NOWPayments (${pay_currency.toUpperCase()})`,
+                    reference: payment_id
                 });
+            } else {
+                console.error('[NOWPayments Webhook] Balance increment failed:', creditError);
             }
         } else {
-            console.warn(`[NOWPayments Webhook] Sub-minimum deposit ($${usdValue}) NOT credited and NOT logged to history.`);
+            console.warn(`[NOWPayments Webhook] Sub-minimum deposit ($${usdValue}) NOT credited.`);
         }
 
         return NextResponse.json({ ok: true });
 
-    } catch (error) {
-        console.error('[NOWPayments Webhook] General Error:', error);
+    } catch (error: any) {
+        console.error('[NOWPayments Webhook] Fatal Error:', error.message || error);
         return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
     }
 }
