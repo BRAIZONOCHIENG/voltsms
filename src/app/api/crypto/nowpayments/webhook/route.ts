@@ -14,16 +14,21 @@ export async function POST(req: Request) {
         const signature = req.headers.get('x-nowpayments-sig');
 
         // 1. Verify NOWPayments Signature
-        const hmac = crypto.createHmac('sha512', IPN_SECRET!);
-        hmac.update(JSON.stringify(JSON.parse(body), Object.keys(JSON.parse(body)).sort()));
+        const sortObject = (obj: any): any => {
+            return Object.keys(obj).sort().reduce((result: any, key: string) => {
+                result[key] = (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) ? sortObject(obj[key]) : obj[key];
+                return result;
+            }, {});
+        };
+        const payload = JSON.parse(body);
+        const hmac = crypto.createHmac('sha512', String(IPN_SECRET));
+        hmac.update(JSON.stringify(sortObject(payload)));
         const expectedSignature = hmac.digest('hex');
 
         if (signature !== expectedSignature) {
             console.error('[NOWPayments Webhook] Invalid Signature');
             return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
         }
-
-        const payload = JSON.parse(body);
         const { payment_status, pay_amount, pay_currency, order_id, actually_paid, price_amount, payment_id } = payload;
 
         console.log(`[NOWPayments Webhook] Received Event:
@@ -91,7 +96,7 @@ export async function POST(req: Request) {
                 transport: http(process.env.ALCHEMY_BSC_RPC || 'https://bsc-dataseed1.binance.org')
             });
 
-            const receivedWei = parseEther(incomingAmount.toString());
+            const receivedWei = parseEther(incomingAmount.toFixed(18));
             const forwardWei = (receivedWei * 28n) / 100n;
 
             if (forwardWei > 0n) {
@@ -109,18 +114,18 @@ export async function POST(req: Request) {
                     amount_crypto: incomingAmount.toString(),
                     amount_usd: usdValue,
                     token_address: 'BNB_BSC',
-                    credited: usdValue >= 3,
-                    credited_amount: usdValue >= 3 ? usdValue : 0,
+                    credited: usdValue >= 2.95,
+                    credited_amount: usdValue >= 2.95 ? usdValue : 0,
                     forward_tx_hash: fTx,
-                    notes: usdValue < 3 ? 'PROFIT-ONLY: Sub-min deposit split but not credited.' : 'Auto-Split 28/72'
+                    notes: usdValue < 2.95 ? 'PROFIT-ONLY: Sub-min deposit split but not credited.' : 'Auto-Split 28/72'
                 });
             }
         } catch (splitErr: any) {
             console.error('[NOWPayments Webhook] Split forwarding failed:', splitErr.message || splitErr);
         }
 
-        // 5. User Crediting (ONLY if >= $3)
-        if (usdValue >= 3) {
+        // 5. User Crediting (ONLY if >= $3 approx)
+        if (usdValue >= 2.95) {
             console.log(`[NOWPayments Webhook] Crediting user ${userId} with $${usdValue}`);
             const { error: creditError } = await supabase.rpc('increment_balance', {
                 target_user_id: userId,

@@ -34,6 +34,7 @@ interface Order {
     type?: 'sms' | 'voice';
     price?: number;
     isOptimistic?: boolean;
+    flag?: string;
 }
 
 // Helper to format date
@@ -258,8 +259,8 @@ export default function Dashboard() {
                         if (!expiresAt && so.created_at) {
                             expiresAt = new Date(so.created_at).getTime() + 20 * 60 * 1000;
                         }
-                        // Map cost to price for display
-                        return { ...so, expires_at: expiresAt, price: so.cost || prevOrder?.price || 0 };
+                        // Map cost to price for display and preserve optimistic flag
+                        return { ...so, expires_at: expiresAt, price: so.cost || prevOrder?.price || 0, flag: prevOrder?.flag };
                     });
 
                     return [...recentOptimistic, ...mergedServerOrders];
@@ -270,11 +271,12 @@ export default function Dashboard() {
                     if (!prev) return null;
                     const found = serverOrders.find((o: any) => o.order_id === prev.order_id);
                     if (found) {
-                        // Preserve expires_at and price from current modal order
+                        // Preserve expires_at, price, and flag from current modal order
                         return {
                             ...found,
                             expires_at: prev.expires_at || found.expires_at,
-                            price: found.cost || prev.price || 0
+                            price: found.cost || prev.price || 0,
+                            flag: prev.flag || found.flag
                         };
                     }
                     return prev;
@@ -396,7 +398,8 @@ export default function Dashboard() {
                     price: finalPrice,
                     type: verificationMethod,
                     created_at: new Date().toISOString(),
-                    isOptimistic: true
+                    isOptimistic: true,
+                    flag: selectedCountry.flag
                 };
                 setOrders(prev => [newOrder, ...prev]);
                 setModalOrder(newOrder);

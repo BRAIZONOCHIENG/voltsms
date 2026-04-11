@@ -22,6 +22,7 @@ interface Order {
     code?: string;
     price?: number;
     type?: 'sms' | 'voice' | 'rental';
+    flag?: string;
 }
 
 interface VerificationModalProps {
@@ -192,7 +193,7 @@ export default function VerificationModal({ isOpen, onClose, order, onCancel, on
                             <label className="text-xs font-bold text-stone-500 uppercase tracking-widest">Use This Number</label>
                             <div className="flex gap-2">
                                 <div className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-lg font-mono font-bold text-white flex items-center gap-3">
-                                    <span className="text-2xl pt-1">🇺🇸</span> {/* Flag logic handled by parent or passed in? Assuming US for now or update later */}
+                                    <span className="text-2xl pt-1">{order.flag || '🌐'}</span>
                                     {order.phone}
                                 </div>
                                 <button

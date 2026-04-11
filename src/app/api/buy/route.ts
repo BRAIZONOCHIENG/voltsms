@@ -25,52 +25,15 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 const SMSPOOL_API_KEY = process.env.SMSPOOL_API_KEY!;
 const GRIZZLY_API_KEY = process.env.GRIZZLY_API_KEY;
 
-// SMSPool uses numeric IDs. Map ISO country codes to SMSPool country IDs.
-const COUNTRY_CODE_TO_SMSPOOL: Record<string, string> = {
-    'US': '1',    // United States
-    'GB': '2',    // United Kingdom
-    'CA': '36',   // Canada
-    'AU': '60',   // Australia
-    'DE': '24',   // Germany
-    'NL': '3',    // Netherlands
-    'FR': '16',   // France
-    'ES': '64',   // Spain
-    'IT': '122',  // Italy
-    'IN': '22',   // India
-    'ID': '6',    // Indonesia
-    'PH': '67',   // Philippines
-    'MY': '12',   // Malaysia
-    'TH': '123',  // Thailand
-    'VN': '4',    // Vietnam
-    'BR': '11',   // Brazil
-    'MX': '53',   // Mexico
-    'RU': '56',   // Russia
-    'PL': '25',   // Poland
-    'UA': '7',    // Ukraine
-    'NG': '152',  // Nigeria
-    'KE': '116',  // Kenya
-    'ZA': '152',  // South Africa (approximation)
-    'PK': '50',   // Pakistan
-    'BD': '153',  // Bangladesh
-    'TR': '97',   // Turkey
-    'SE': '69',   // Sweden
-    'NO': '117',  // Norway
-    'DK': '44',   // Denmark
-    'FI': '43',   // Finland
-    'BE': '62',   // Belgium
-    'AT': '66',   // Austria
-    'CH': '37',   // Switzerland
-    'PT': '41',   // Portugal
-    'RO': '35',   // Romania
-    'HU': '42',   // Hungary
-    'IE': '59',   // Ireland
-    'NZ': '63',   // New Zealand
-    'SG': '52',   // Singapore
-    'HK': '51',   // Hong Kong
-    'JP': '10',   // Japan
-    'KR': '65',   // South Korea
-    'CN': '156',  // China
-};
+import ALL_COUNTRIES_JSON from '@/data/countries.json';
+
+// SMSPool uses numeric IDs. Map ISO country codes to SMSPool country IDs natively from data.
+const COUNTRY_CODE_TO_SMSPOOL: Record<string, string> = ALL_COUNTRIES_JSON.reduce((acc, c: any) => {
+    acc[c.code] = c.id;
+    return acc;
+}, {} as Record<string, string>);
+
+
 
 // Special overrides for common service names (supplements the full SMSPOOL_SERVICE_MAPPING)
 const SERVICE_OVERRIDES: Record<string, string> = {
