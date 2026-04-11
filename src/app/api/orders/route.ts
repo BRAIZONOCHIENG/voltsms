@@ -98,12 +98,41 @@ export async function GET(req: NextRequest) {
         order.expires_at = dbExpiresAt;
 
         if (order.status === 'pending' && expiresAtTime && expiresAtTime < Date.now()) {
-            // Update in DB (async, don't await blocking response)
-            if (order.type === 'rental') {
-                supabaseAdmin.from('rentals').update({ status: 'expired' }).eq('smspool_rental_id', order.order_id).then();
-            } else {
-                supabaseAdmin.from('orders').update({ status: 'expired' }).eq('order_id', order.order_id).then();
-            }
+            // Update in DB (async, handles refund accurately)
+            const handleExpiration = async () => {
+                try {
+                    // 1. Mark as expired (only if still pending to prevent double-refund)
+                    const { data: updated, error: updateError } = await (order.type === 'rental' 
+                        ? supabaseAdmin.from('rentals').update({ status: 'expired' }).eq('smspool_rental_id', order.order_id).eq('status', 'pending').select()
+                        : supabaseAdmin.from('orders').update({ status: 'expired' }).eq('order_id', order.order_id).eq('status', 'pending').select());
+
+                    if (updateError || !updated || updated.length === 0) {
+                        return; // Already processed or error
+                    }
+
+                    // 2. Refund user balance
+                    const { data: profile } = await supabaseAdmin
+                        .from('users')
+                        .select('balance')
+                        .eq('user_id', user.id)
+                        .single();
+
+                    if (profile) {
+                        const refundAmount = Number(order.cost || 0);
+                        if (refundAmount > 0) {
+                            await supabaseAdmin
+                                .from('users')
+                                .update({ balance: (profile.balance || 0) + refundAmount })
+                                .eq('user_id', user.id);
+                            console.log(`[Auto-Expire] Refunded ${refundAmount} to user ${user.id} for order ${order.order_id}`);
+                        }
+                    }
+                } catch (err) {
+                    console.error("[Auto-Expire] Background update failed", err);
+                }
+            };
+
+            handleExpiration(); // Fire and forget
             return { ...order, status: 'expired' };
         }
         return order;

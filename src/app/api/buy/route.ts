@@ -133,9 +133,11 @@ export async function POST(req: Request) {
             console.log(`[Buy API] SMSPool Purchase: service=${smspoolService} (${serviceLower}), country=${smspoolCountry} (${country})`);
 
             try {
-                // Reverting to static $1.00 limit as per user request.
-                // pricing_option: '1' ensures we always fetch the highest quality number.
-                order = await smsClient.purchaseNumber(smspoolService, smspoolCountry, '1', 1.00);
+                // pricing_option: '1' ensures we always fetch the highest quality number (Highest Success Rate).
+                // We set maxPrice to the user's paid price minus a tiny margin (0.01) to allow for 
+                // the best possible pool while ensuring we don't buy at a loss.
+                const providerMaxPrice = Math.max(0, price - 0.01);
+                order = await smsClient.purchaseNumber(smspoolService, smspoolCountry, '1', providerMaxPrice);
             } catch (e: any) {
                 console.error("SMSPool Purchase Error:", e.message || e);
                 return NextResponse.json({
