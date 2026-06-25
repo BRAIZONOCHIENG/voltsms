@@ -14,7 +14,6 @@ import { createClient } from '@supabase/supabase-js';
  * -----------------------------------------------------------------------------
  */
 import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
-import { GrizzlySMSClient } from '@/lib/providers/GrizzlySMSClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,16 +52,9 @@ export async function POST(req: Request) {
         let smsCode: string | null = null;
 
         try {
-            if (provider === 'grizzly') {
-                const status = await GrizzlySMSClient.checkStatus(orderId);
-                if (status && status.status === 'COMPLETED') {
-                    smsCode = status.code || null;
-                }
-            } else {
-                // SMSPool
-                const client = new SMSPoolClient(SMSPOOL_API_KEY);
-                smsCode = await client.getSMS(orderId);
-            }
+            // SMSPool
+            const client = new SMSPoolClient(SMSPOOL_API_KEY);
+            smsCode = await client.getSMS(orderId);
         } catch (e: any) {
             console.error(`${provider} Check Error:`, e);
             // Keep pending if API errors (don't fail user yet)

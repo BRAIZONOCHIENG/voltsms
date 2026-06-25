@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { PVAPinsClient } from '@/lib/providers/PVAPinsClient';
-import { GrizzlySMSClient } from '@/lib/providers/GrizzlySMSClient';
+import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
         let cancelled = false;
 
         if (order.provider === 'smspool') {
-            // Status '8' = Cancel
-            cancelled = await GrizzlySMSClient.setStatus(order.order_id, '8');
+            const client = new SMSPoolClient(process.env.SMSPOOL_API_KEY!);
+            cancelled = await client.cancelOrder(order.order_id);
         } else {
             // Fallback to PVAPins (Legacy)
             const client = new PVAPinsClient(PVAPINS_API_KEY);

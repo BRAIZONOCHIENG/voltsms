@@ -12,7 +12,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Navbar from '../../components/Navbar';
 import { useRouter } from 'next/navigation';
-import { FaSearch, FaWallet, FaShoppingCart, FaChevronDown, FaRegStar, FaStar, FaQuestionCircle, FaClock, FaHistory, FaCheckCircle, FaTimesCircle, FaPlay, FaPlus } from 'react-icons/fa';
+import { FaSearch, FaWallet, FaShoppingCart, FaChevronDown, FaRegStar, FaStar, FaQuestionCircle, FaClock, FaHistory, FaCheckCircle, FaTimesCircle, FaPlay, FaPlus, FaPaypal, FaCreditCard, FaBitcoin } from 'react-icons/fa';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FixedSizeList as List } from 'react-window';
@@ -21,6 +21,9 @@ import { Country, COUNTRIES } from './countries';
 import { SERVICES_DATA } from './services_data';
 import { supabase } from '../../lib/supabaseClient';
 import VoltSplitterPayment from '../../components/VoltSplitterPayment';
+import dynamic from 'next/dynamic';
+const PaystackTrigger = dynamic(() => import('../../components/PaystackTrigger'), { ssr: false });
+import PayPalTrigger from '../../components/PayPalTrigger';
 import VerificationModal from '../../components/VerificationModal';
 
 interface Order {
@@ -168,6 +171,9 @@ export default function Dashboard() {
     const router = useRouter();
     const [userToken, setUserToken] = useState<string | null>(null);
     const [userId, setUserId] = useState<string>('');
+    const [userEmail, setUserEmail] = useState<string>('');
+    const [depositMethod, setDepositMethod] = useState<'crypto' | 'paystack' | 'paypal'>('crypto');
+    const [fiatAmount, setFiatAmount] = useState<number>(3);
 
     // Derived Lists
     const activeOrders = useMemo(() => orders.filter(o => o.status === 'pending'), [orders]);
@@ -180,6 +186,7 @@ export default function Dashboard() {
             if (!session) { router.push('/login'); return; }
             setUserToken(session.access_token);
             setUserId(session.user.id);
+            setUserEmail(session.user.email || '');
             fetchData(session.access_token);
             fetchDeposits(session.access_token);
 
@@ -489,7 +496,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Order Service Section */}
-                <div ref={orderSectionRef} className="scroll-mt-24 mb-12">
+                <div ref={orderSectionRef} className="scroll-mt-24 mb-6">
                     <div className="bg-gradient-to-br from-white/10 to-transparent backdrop-blur-2xl border-t border-l border-white/20 border-b border-r border-black/20 rounded-3xl p-1 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-visible ring-1 ring-white/5 relative z-20">
                         {/* Tab Headers within Card */}
                         <div className="grid grid-cols-2 p-1 bg-white/5 backdrop-blur-md rounded-2xl mb-6 mx-4 mt-4">
@@ -509,7 +516,79 @@ export default function Dashboard() {
 
                         <div className="px-6 pb-8 pt-2">
                             {actionTab === 'deposit' ? (
-                                <VoltSplitterPayment userId={userId} userToken={userToken || undefined} />
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <button
+                                            onClick={() => setDepositMethod('crypto')}
+                                            className={`py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${depositMethod === 'crypto' ? 'bg-white/10 text-white ring-1 ring-white/20' : 'bg-white/5 text-stone-400 hover:bg-white/10 hover:text-white'}`}
+                                        >
+                                            <FaBitcoin className="text-xl" />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Crypto</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setDepositMethod('paystack')}
+                                            className={`py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${depositMethod === 'paystack' ? 'bg-white/10 text-white ring-1 ring-white/20' : 'bg-white/5 text-stone-400 hover:bg-white/10 hover:text-white'}`}
+                                        >
+                                            <FaCreditCard className="text-xl" />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Card</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setDepositMethod('paypal')}
+                                            className={`py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${depositMethod === 'paypal' ? 'bg-white/10 text-white ring-1 ring-white/20' : 'bg-white/5 text-stone-400 hover:bg-white/10 hover:text-white'}`}
+                                        >
+                                            <FaPaypal className="text-xl" />
+                                            <span className="text-xs font-bold uppercase tracking-wider">PayPal</span>
+                                        </button>
+                                    </div>
+
+                                    {depositMethod === 'crypto' && (
+                                        <VoltSplitterPayment userId={userId} userToken={userToken || undefined} />
+                                    )}
+
+                                    {depositMethod !== 'crypto' && (
+                                        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                                            <label className="text-xs font-semibold uppercase text-stone-400 tracking-wider mb-2 block">Deposit Amount (USD)</label>
+                                            <div className="relative">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-bold">$</span>
+                                                <input
+                                                    type="number"
+                                                    min={3}
+                                                    step="0.1"
+                                                    value={fiatAmount}
+                                                    onChange={(e) => setFiatAmount(Math.max(3, parseFloat(e.target.value) || 3))}
+                                                    className="w-full bg-black/40 border border-white/10 rounded-xl py-4 pl-8 pr-4 text-white text-xl font-bold focus:outline-none focus:border-[var(--color-primary)] transition-colors"
+                                                />
+                                            </div>
+                                            <p className="text-stone-500 text-xs mt-2 italic">Minimum deposit: $3.00 USD</p>
+
+                                            {depositMethod === 'paystack' && (
+                                                <PaystackTrigger
+                                                    email={userEmail}
+                                                    amountUSD={fiatAmount}
+                                                    method="card"
+                                                    onSuccess={(reference) => {
+                                                        alert("Payment processing! Balance will update shortly.");
+                                                        if (userToken) fetchDeposits(userToken);
+                                                    }}
+                                                />
+                                            )}
+
+                                            {depositMethod === 'paypal' && (
+                                                <div className="mt-8">
+                                                    <PayPalTrigger
+                                                        amount={fiatAmount}
+                                                        onSuccess={(orderId) => {
+                                                            alert("PayPal Payment Successful!");
+                                                            if (userToken) fetchDeposits(userToken);
+                                                        }}
+                                                        onError={(err) => alert("PayPal Payment Failed")}
+                                                        getAccessToken={async () => userToken}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             ) : (
                                 <>
                                     {/* Verification Method Toggle - REMOVED for Non-VoIP focus */}
@@ -633,6 +712,14 @@ export default function Dashboard() {
                                 </>
                             )}
                         </div>
+                    </div>
+                </div>
+
+                {/* Helpful Tip Banner */}
+                <div className="mb-6 py-2.5 px-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-200 text-sm flex items-center gap-3">
+                    <span className="text-xl shrink-0">💡</span>
+                    <div className="leading-snug">
+                        <strong className="text-blue-400">Didn't receive your code? Don't worry!</strong> Since we use real SIMs, networks can sometimes block messages. If your SMS doesn't arrive, simply hit <strong>Cancel</strong>. Your balance is instantly refunded, and you can try again!
                     </div>
                 </div>
 

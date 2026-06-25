@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 // PayPal creds from env
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID!;
-const PAYPAL_SECRET = process.env.PAYPAL_SECRET!;
+const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_ID!;
+const PAYPAL_SECRET = process.env.PAYPAL_CLIENT_SECRET || process.env.PAYPAL_SECRET!;
 const OXAPAY_MERCHANT_KEY = process.env.OXAPAY_MERCHANT_KEY!;
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -16,6 +16,8 @@ async function getPayPalToken() {
     // LIVE Standard Endpoint (NO -m, NO Sandbox)
     const endpoint = 'https://api.paypal.com/v1/oauth2/token';
     console.log(`Getting PayPal Token from ${endpoint}...`);
+    console.log(`Client ID loaded: ${PAYPAL_CLIENT_ID ? PAYPAL_CLIENT_ID.substring(0, 5) + '...' : 'MISSING'}`);
+    console.log(`Secret loaded: ${PAYPAL_SECRET ? PAYPAL_SECRET.substring(0, 5) + '...' : 'MISSING'}`);
 
     try {
         const res = await fetch(endpoint, {

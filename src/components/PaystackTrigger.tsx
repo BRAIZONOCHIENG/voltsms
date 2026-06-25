@@ -24,7 +24,7 @@ const PaystackTrigger: React.FC<PaystackTriggerProps> = ({ email, amountUSD, met
         amount: amountKES, // Amount is in Kobo/Cents
         publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
         currency: 'KES',
-        channels: method === 'mpesa' ? ['mobile_money'] : ['card'],
+        channels: ['card', 'mobile_money'],
         metadata: {
             custom_fields: [
                 {
@@ -62,7 +62,7 @@ const PaystackTrigger: React.FC<PaystackTriggerProps> = ({ email, amountUSD, met
             disabled={loading}
             className="w-full py-4 mt-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-lg shadow-lg hover:shadow-purple-500/25 transition-all text-white disabled:opacity-75 disabled:cursor-not-allowed"
         >
-            {loading ? 'Securely Loading...' : `Confirm Deposit (${method === 'mpesa' ? 'M-Pesa' : 'Card'})`}
+            {loading ? 'Securely Loading...' : `Confirm Deposit`}
         </motion.button>
     );
 };

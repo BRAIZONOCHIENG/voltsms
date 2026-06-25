@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GrizzlySMSClient } from '@/lib/providers/GrizzlySMSClient';
+import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
 import { SERVICES_DATA } from '@/app/dashboard/services_data';
 
 const supabaseAdmin = createClient(
@@ -8,8 +8,7 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// We use GrizzlyClient but it is internally mapped to SMSPool now
-// Static class usage
+
 
 export async function POST(req: NextRequest) {
     try {
@@ -83,14 +82,13 @@ export async function POST(req: NextRequest) {
         // 5. Call Provider
         let order;
         try {
-            // Mapping handled by client internally now.
-            // We pass '1' (High Success) and revert to 1.00 max_price for speed and stability.
-            const result = await GrizzlySMSClient.purchaseNumber(serviceId, country, 1, 1.0);
+            const smsClient = new SMSPoolClient(process.env.SMSPOOL_API_KEY!);
+            const result = await smsClient.purchaseNumber(serviceId, country, '1', 1.0);
             if (result) {
                 order = {
-                    orderId: result.order_id,
-                    phone: result.number,
-                    price: result.price
+                    orderId: result.orderId,
+                    phone: result.phoneNumber,
+                    price: result.cost
                 };
             }
         } catch (providerError: any) {

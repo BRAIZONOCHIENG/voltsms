@@ -10,7 +10,7 @@ import {
   FaDiscord, FaUber, FaTwitter, FaSnapchatGhost, FaTiktok, FaRobot,
   FaShieldAlt, FaBolt, FaUserSecret, FaCheckCircle, FaChevronDown,
   FaWallet, FaSms, FaUserPlus, FaBitcoin, FaEthereum, FaMonero,
-  FaUsers, FaMoneyBillWave
+  FaUsers, FaMoneyBillWave, FaPaypal, FaCreditCard
 } from 'react-icons/fa';
 import { SiTether, SiLitecoin } from 'react-icons/si';
 
@@ -37,7 +37,7 @@ export default function Home() {
   const faqs = [
     { q: "Is this really Non-VoIP?", a: "Yes. We use real SIM cards from physical devices. This means our numbers work on services that block virtual numbers (VoIP) like Tinder, Telegram, and WhatsApp." },
     { q: "How long does the number work?", a: "These are temporary numbers for one-time verification (OTP). The number is active for 15-20 minutes to receive your code. After that, it is closed for security." },
-    { q: "Do you accept Crypto?", a: "Yes, we accept Bitcoin, Litecoin, USDT (Tether), Ethereum, and Monero. Payments are credited automatically after 1 confirmation." },
+    { q: "What payment methods do you accept?", a: "We accept PayPal, Credit/Debit Cards, and Cryptocurrency (Bitcoin, Litecoin, USDT, Ethereum, Monero). All payments are credited instantly to your account balance." },
     { q: "What if the code doesn't arrive?", a: "You don't pay. If the SMS doesn't arrive within the timeout period, the order is automatically cancelled and your credit is refunded instantly to your balance." },
     { q: "Can I use the same number twice?", a: "No. For security and privacy, each number is used once for a single verification code and then discarded. If you need another code, simply buy a new number." },
     { q: "Do I need ID Verification?", a: "Never. We value your privacy. No ID, no KYC, no personal details required. Just sign up and pay with Crypto." },
@@ -148,14 +148,17 @@ export default function Home() {
               </MagneticButton>
             </Link>
 
-            {/* Crypto Icons Strip */}
-            <div className="flex items-center gap-6 px-6 py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 text-stone-400">
+            {/* Payment Icons Strip */}
+            <div className="flex items-center gap-6 px-6 py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 text-stone-400 overflow-x-auto whitespace-nowrap">
+              <FaPaypal className="text-2xl hover:text-[#00457C] transition-colors" title="PayPal" />
+              <FaCreditCard className="text-2xl hover:text-[#000000] transition-colors" title="Credit Card" />
+              <div className="w-px h-6 bg-white/10 mx-1"></div>
               <FaBitcoin className="text-2xl hover:text-[#F7931A] transition-colors" title="Bitcoin" />
               <SiLitecoin className="text-2xl hover:text-[#345D9D] transition-colors" title="Litecoin" />
               <SiTether className="text-2xl hover:text-[#53AE94] transition-colors" title="USDT" />
               <FaEthereum className="text-2xl hover:text-[#627EEA] transition-colors" title="Ethereum" />
               <FaMonero className="text-2xl hover:text-[#FF6600] transition-colors" title="Monero" />
-              <span className="text-xs font-bold uppercase tracking-wider ml-2 border-l border-white/10 pl-4">Crypto Accepted</span>
+              <span className="text-xs font-bold uppercase tracking-wider ml-2 border-l border-white/10 pl-4">Payments Accepted</span>
             </div>
           </motion.div>
 
@@ -281,7 +284,7 @@ export default function Home() {
               {
                 icon: <FaWallet />,
                 title: t('step_2_title'),
-                desc: "Top up your balance instantly using Bitcoin, Litecoin, USDT, or Monero."
+                desc: "Top up your balance instantly using PayPal, Credit Card, or Cryptocurrency."
               },
               {
                 icon: <FaSms />,

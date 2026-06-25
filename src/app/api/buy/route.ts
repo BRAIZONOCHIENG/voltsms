@@ -3,7 +3,7 @@ if (dns.setDefaultResultOrder) dns.setDefaultResultOrder('ipv4first');
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
-import { GrizzlySMSClient } from '@/lib/providers/GrizzlySMSClient';
+
 /*
  * -----------------------------------------------------------------------------
  * 🔒 LOCKED FILE - CRITICAL PAYMENT INFRASTRUCTURE
@@ -23,7 +23,6 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // SMSPool Config
 const SMSPOOL_API_KEY = process.env.SMSPOOL_API_KEY!;
-const GRIZZLY_API_KEY = process.env.GRIZZLY_API_KEY;
 
 import ALL_COUNTRIES_JSON from '@/data/countries.json';
 
@@ -74,76 +73,46 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
         }
 
-        // 3. Purchase Number (Grizzly or SMSPool)
+        // 3. Purchase Number (SMSPool)
         let order;
         let providerUsed = 'smspool';
 
-        if (GRIZZLY_API_KEY) {
-            console.log("Using Grizzly SMS Provider");
-            providerUsed = 'grizzly';
-            try {
-                // Grizzly returns { order_id, number, price? }
-                // Note: Grizzly price is often not returned in purchase, we might need to estimate or fetch
-                // For now, we assume cost <= price (user paid limit)
-                const result = await GrizzlySMSClient.purchaseNumber(service, country);
+        const smsClient = new SMSPoolClient(SMSPOOL_API_KEY);
 
-                if (!result) {
-                    throw new Error("No numbers available (Grizzly)");
-                }
+        // Convert country code to SMSPool country ID
+        const countryUpper = country?.toUpperCase() || '';
+        const smspoolCountry = COUNTRY_CODE_TO_SMSPOOL[countryUpper] || country;
 
-                order = {
-                    orderId: result.order_id,
-                    phoneNumber: result.number,
-                    cost: price, // We deduct the user's max price for now (or exact if known)
-                    expiresAt: new Date(Date.now() + 20 * 60000) // 20 min default
-                };
+        // Convert service name to SMSPool service ID
+        const serviceLower = service?.toLowerCase() || '';
+        // Normalize: remove special characters for lookup
+        const serviceNormalized = serviceLower.replace(/[^a-z0-9]/g, '');
 
-            } catch (e: any) {
-                console.error("Grizzly Purchase Error:", e.message || e);
-                return NextResponse.json({
-                    error: 'Grizzly SMS Service Unavailable. Try again.'
-                }, { status: 503 });
-            }
+        // First check overrides, then the full static mapping
+        let smspoolService = SERVICE_OVERRIDES[serviceLower] ||
+            SERVICE_OVERRIDES[serviceNormalized] ||
+            SMSPOOL_SERVICE_MAPPING[serviceLower] ||
+            SMSPOOL_SERVICE_MAPPING[serviceNormalized];
 
-        } else {
-            // SMSPool Fallback
-            const smsClient = new SMSPoolClient(SMSPOOL_API_KEY);
+        if (!smspoolService) {
+            console.log(`[Buy API] No mapping found for service="${serviceLower}" (normalized: "${serviceNormalized}")`);
+            // Last resort: use raw service value
+            smspoolService = service;
+        }
 
-            // Convert country code to SMSPool country ID
-            const countryUpper = country?.toUpperCase() || '';
-            const smspoolCountry = COUNTRY_CODE_TO_SMSPOOL[countryUpper] || country;
+        console.log(`[Buy API] SMSPool Purchase: service=${smspoolService} (${serviceLower}), country=${smspoolCountry} (${country})`);
 
-            // Convert service name to SMSPool service ID
-            const serviceLower = service?.toLowerCase() || '';
-            // Normalize: remove special characters for lookup
-            const serviceNormalized = serviceLower.replace(/[^a-z0-9]/g, '');
-
-            // First check overrides, then the full static mapping
-            let smspoolService = SERVICE_OVERRIDES[serviceLower] ||
-                SERVICE_OVERRIDES[serviceNormalized] ||
-                SMSPOOL_SERVICE_MAPPING[serviceLower] ||
-                SMSPOOL_SERVICE_MAPPING[serviceNormalized];
-
-            if (!smspoolService) {
-                console.log(`[Buy API] No mapping found for service="${serviceLower}" (normalized: "${serviceNormalized}")`);
-                // Last resort: use raw service value
-                smspoolService = service;
-            }
-
-            console.log(`[Buy API] SMSPool Purchase: service=${smspoolService} (${serviceLower}), country=${smspoolCountry} (${country})`);
-
-            try {
-                // pricing_option: '1' ensures we always fetch the highest quality number (Highest Success Rate).
-                // We set maxPrice to the user's paid price minus a tiny margin (0.01) to allow for 
-                // the best possible pool while ensuring we don't buy at a loss.
-                const providerMaxPrice = Math.max(0, price - 0.01);
-                order = await smsClient.purchaseNumber(smspoolService, smspoolCountry, '1', providerMaxPrice);
-            } catch (e: any) {
-                console.error("SMSPool Purchase Error:", e.message || e);
-                return NextResponse.json({
-                    error: "no numbers available for this country at the moment, try again later or choose a different country"
-                }, { status: 503 });
-            }
+        try {
+            // pricing_option: '1' ensures we always fetch the highest quality number (Highest Success Rate).
+            // We set maxPrice to the user's paid price minus a tiny margin (0.01) to allow for 
+            // the best possible pool while ensuring we don't buy at a loss.
+            const providerMaxPrice = Math.max(0, price - 0.01);
+            order = await smsClient.purchaseNumber(smspoolService, smspoolCountry, '1', providerMaxPrice);
+        } catch (e: any) {
+            console.error("SMSPool Purchase Error:", e.message || e);
+            return NextResponse.json({
+                error: "no numbers available for this country at the moment, try again later or choose a different country"
+            }, { status: 503 });
         }
 
         // 4. Deduct User Balance

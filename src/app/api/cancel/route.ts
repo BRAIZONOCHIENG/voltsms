@@ -13,7 +13,6 @@ import { createClient } from '@supabase/supabase-js';
  * -----------------------------------------------------------------------------
  */
 import { SMSPoolClient } from '@/lib/providers/SMSPoolClient';
-import { GrizzlySMSClient } from '@/lib/providers/GrizzlySMSClient';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -51,12 +50,8 @@ export async function POST(req: Request) {
         const provider = order.provider || 'smspool';
         let cancelled = false;
 
-        if (provider === 'grizzly') {
-            cancelled = await GrizzlySMSClient.setStatus(orderId, '8'); // 8 = Cancel
-        } else {
-            const client = new SMSPoolClient(SMSPOOL_API_KEY);
-            cancelled = await client.cancelOrder(orderId);
-        }
+        const client = new SMSPoolClient(SMSPOOL_API_KEY);
+        cancelled = await client.cancelOrder(orderId);
 
         if (cancelled) {
             // 4. Refund Logic

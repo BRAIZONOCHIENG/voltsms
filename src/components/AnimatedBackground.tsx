@@ -22,7 +22,7 @@ export const AnimatedBackground = () => {
                 animate={{
                     scale: [1, 1.2, 1],
                     rotate: [0, 90, 0],
-                    opacity: [0.3, 0.5, 0.3],
+                    opacity: [0.15, 0.3, 0.15],
                 }}
                 transition={{
                     duration: 20,
@@ -37,6 +37,7 @@ export const AnimatedBackground = () => {
                     scale: [1, 1.5, 1],
                     x: [0, 100, 0],
                     y: [0, -50, 0],
+                    opacity: [0.15, 0.3, 0.15],
                 }}
                 transition={{
                     duration: 15,
@@ -50,13 +51,14 @@ export const AnimatedBackground = () => {
                 animate={{
                     scale: [1, 1.3, 1],
                     x: [0, -100, 0],
+                    opacity: [0.15, 0.3, 0.15],
                 }}
                 transition={{
                     duration: 18,
                     repeat: Infinity,
                     ease: "easeInOut",
                 }}
-                className="absolute top-[40%] left-[30%] w-[400px] h-[400px] rounded-full blur-[90px] opacity-40"
+                className="absolute top-[40%] left-[30%] w-[400px] h-[400px] rounded-full blur-[90px]"
             />
         </motion.div>
     );
