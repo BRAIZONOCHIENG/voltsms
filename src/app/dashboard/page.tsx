@@ -172,8 +172,8 @@ export default function Dashboard() {
     const [userToken, setUserToken] = useState<string | null>(null);
     const [userId, setUserId] = useState<string>('');
     const [userEmail, setUserEmail] = useState<string>('');
-    const [depositMethod, setDepositMethod] = useState<'crypto' | 'paystack' | 'paypal'>('crypto');
-    const [fiatAmount, setFiatAmount] = useState<number>(3);
+    const [depositMethod, setDepositMethod] = useState<'crypto' | 'paypal' | 'paystack'>('crypto');
+    const [fiatAmount, setFiatAmount] = useState<string>('5');
     const [paymentKeys, setPaymentKeys] = useState<{ paystackPublicKey: string, paypalClientId: string } | null>(null);
 
     // Derived Lists
@@ -536,18 +536,18 @@ export default function Dashboard() {
                                             <span className="text-xs font-bold uppercase tracking-wider">Crypto</span>
                                         </button>
                                         <button
-                                            onClick={() => setDepositMethod('paystack')}
-                                            className={`py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${depositMethod === 'paystack' ? 'bg-white/10 text-white ring-1 ring-white/20' : 'bg-white/5 text-stone-400 hover:bg-white/10 hover:text-white'}`}
-                                        >
-                                            <FaCreditCard className="text-xl" />
-                                            <span className="text-xs font-bold uppercase tracking-wider">Card</span>
-                                        </button>
-                                        <button
                                             onClick={() => setDepositMethod('paypal')}
                                             className={`py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${depositMethod === 'paypal' ? 'bg-white/10 text-white ring-1 ring-white/20' : 'bg-white/5 text-stone-400 hover:bg-white/10 hover:text-white'}`}
                                         >
                                             <FaPaypal className="text-xl" />
                                             <span className="text-xs font-bold uppercase tracking-wider">PayPal</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setDepositMethod('paystack')}
+                                            className={`py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${depositMethod === 'paystack' ? 'bg-white/10 text-white ring-1 ring-white/20' : 'bg-white/5 text-stone-400 hover:bg-white/10 hover:text-white'}`}
+                                        >
+                                            <FaCreditCard className="text-xl" />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Card</span>
                                         </button>
                                     </div>
 
@@ -562,46 +562,52 @@ export default function Dashboard() {
                                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-bold">$</span>
                                                 <input
                                                     type="number"
-                                                    min={3}
-                                                    step="0.1"
+                                                    min={5}
+                                                    step="1"
                                                     value={fiatAmount}
-                                                    onChange={(e) => setFiatAmount(Math.max(3, parseFloat(e.target.value) || 3))}
+                                                    onChange={(e) => setFiatAmount(e.target.value)}
                                                     className="w-full bg-black/40 border border-white/10 rounded-xl py-4 pl-8 pr-4 text-white text-xl font-bold focus:outline-none focus:border-[var(--color-primary)] transition-colors"
                                                 />
                                             </div>
-                                            <p className="text-stone-500 text-xs mt-2 italic">Minimum deposit: $3.00 USD</p>
+                                            {(parseFloat(fiatAmount) || 0) > 0 && (parseFloat(fiatAmount) || 0) < 5 ? (
+                                                <p className="text-red-500 text-xs mt-2 font-bold animate-pulse">Minimum deposit is $5.00 USD</p>
+                                            ) : (
+                                                <p className="text-stone-500 text-xs mt-2 italic">Minimum deposit: $5.00 USD</p>
+                                            )}
 
-                                            {depositMethod === 'paystack' && paymentKeys?.paystackPublicKey ? (
-                                                <PaystackTrigger
-                                                    email={userEmail}
-                                                    amountUSD={fiatAmount}
-                                                    method="card"
-                                                    publicKey={paymentKeys.paystackPublicKey}
-                                                    onSuccess={(reference) => {
-                                                        alert("Payment processing! Balance will update shortly.");
-                                                        if (userToken) fetchDeposits(userToken);
-                                                    }}
-                                                />
-                                            ) : depositMethod === 'paystack' && !paymentKeys?.paystackPublicKey ? (
-                                                <div className="text-stone-500 text-center py-4">Loading Paystack...</div>
-                                            ) : null}
-
-                                            {depositMethod === 'paypal' && paymentKeys?.paypalClientId ? (
-                                                <div className="mt-8">
-                                                    <PayPalTrigger
-                                                        amount={fiatAmount}
-                                                        clientId={paymentKeys.paypalClientId}
-                                                        onSuccess={(orderId) => {
-                                                            alert("PayPal Payment Successful!");
+                                            <div className={(parseFloat(fiatAmount) || 0) < 5 ? "opacity-50 pointer-events-none mt-4" : "mt-4"}>
+                                                {depositMethod === 'paystack' && paymentKeys?.paystackPublicKey ? (
+                                                    <PaystackTrigger
+                                                        email={userEmail}
+                                                        amountUSD={parseFloat(fiatAmount) || 0}
+                                                        method="card"
+                                                        publicKey={paymentKeys.paystackPublicKey}
+                                                        onSuccess={(reference) => {
+                                                            alert("Payment processing! Balance will update shortly.");
                                                             if (userToken) fetchDeposits(userToken);
                                                         }}
-                                                        onError={(err) => alert("PayPal Payment Failed")}
-                                                        getAccessToken={async () => userToken}
                                                     />
-                                                </div>
-                                            ) : depositMethod === 'paypal' && !paymentKeys?.paypalClientId ? (
-                                                <div className="text-stone-500 text-center py-4">Loading PayPal...</div>
-                                            ) : null}
+                                                ) : depositMethod === 'paystack' && !paymentKeys?.paystackPublicKey ? (
+                                                    <div className="text-stone-500 text-center py-4">Loading Paystack...</div>
+                                                ) : null}
+
+                                                {depositMethod === 'paypal' && paymentKeys?.paypalClientId ? (
+                                                    <div className="mt-4">
+                                                        <PayPalTrigger
+                                                            amount={parseFloat(fiatAmount) || 0}
+                                                            clientId={paymentKeys.paypalClientId}
+                                                            onSuccess={(orderId) => {
+                                                                alert("PayPal Payment Successful!");
+                                                                if (userToken) fetchDeposits(userToken);
+                                                            }}
+                                                            onError={(err) => alert("PayPal Payment Failed")}
+                                                            getAccessToken={async () => userToken}
+                                                        />
+                                                    </div>
+                                                ) : depositMethod === 'paypal' && !paymentKeys?.paypalClientId ? (
+                                                    <div className="text-stone-500 text-center py-4">Loading PayPal...</div>
+                                                ) : null}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
