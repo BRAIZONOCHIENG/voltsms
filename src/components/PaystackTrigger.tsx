@@ -8,10 +8,11 @@ interface PaystackTriggerProps {
     email: string;
     amountUSD: number;
     method: 'card' | 'mpesa';
+    publicKey: string;
     onSuccess: (reference: any) => void;
 }
 
-const PaystackTrigger: React.FC<PaystackTriggerProps> = ({ email, amountUSD, method, onSuccess }) => {
+const PaystackTrigger: React.FC<PaystackTriggerProps> = ({ email, amountUSD, method, publicKey, onSuccess }) => {
     const amountKES = Math.round(amountUSD * 130 * 100); // USD -> KES -> Cents
     const [loading, setLoading] = React.useState(false);
 
@@ -22,7 +23,7 @@ const PaystackTrigger: React.FC<PaystackTriggerProps> = ({ email, amountUSD, met
         reference: (new Date()).getTime().toString(),
         email: safeEmail,
         amount: amountKES, // Amount is in Kobo/Cents
-        publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+        publicKey: publicKey,
         currency: 'KES',
         channels: ['card', 'mobile_money'],
         metadata: {

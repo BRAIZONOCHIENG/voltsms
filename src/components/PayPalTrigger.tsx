@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 interface PayPalTriggerProps {
     amount: number;
+    clientId: string;
     onSuccess: (orderID: string) => void;
     onError: (err: any) => void;
     getAccessToken: () => Promise<string | null>;
@@ -15,7 +16,7 @@ declare global {
     }
 }
 
-const PayPalTrigger: React.FC<PayPalTriggerProps> = ({ amount, onSuccess, onError, getAccessToken }) => {
+const PayPalTrigger: React.FC<PayPalTriggerProps> = ({ amount, clientId, onSuccess, onError, getAccessToken }) => {
     const paypalRef = useRef<HTMLDivElement>(null);
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -36,7 +37,7 @@ const PayPalTrigger: React.FC<PayPalTriggerProps> = ({ amount, onSuccess, onErro
         if (!script) {
             script = document.createElement("script");
             script.id = scriptId;
-            script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test"}&currency=USD`;
+            script.src = `https://www.paypal.com/sdk/js?client-id=${clientId || "test"}&currency=USD`;
             script.async = true;
             document.body.appendChild(script);
         }

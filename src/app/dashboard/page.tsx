@@ -174,6 +174,7 @@ export default function Dashboard() {
     const [userEmail, setUserEmail] = useState<string>('');
     const [depositMethod, setDepositMethod] = useState<'crypto' | 'paystack' | 'paypal'>('crypto');
     const [fiatAmount, setFiatAmount] = useState<number>(3);
+    const [paymentKeys, setPaymentKeys] = useState<{ paystackPublicKey: string, paypalClientId: string } | null>(null);
 
     // Derived Lists
     const activeOrders = useMemo(() => orders.filter(o => o.status === 'pending'), [orders]);
@@ -193,6 +194,15 @@ export default function Dashboard() {
             // Restore pins
             const savedPins = localStorage.getItem('pinnedServices');
             if (savedPins) setPinnedServices(JSON.parse(savedPins));
+
+            // Fetch dynamic payment keys
+            try {
+                const keysRes = await fetch('/api/payment-config');
+                const keysData = await keysRes.json();
+                setPaymentKeys(keysData);
+            } catch (e) {
+                console.error("Failed to fetch payment keys", e);
+            }
         };
         init();
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -561,22 +571,26 @@ export default function Dashboard() {
                                             </div>
                                             <p className="text-stone-500 text-xs mt-2 italic">Minimum deposit: $3.00 USD</p>
 
-                                            {depositMethod === 'paystack' && (
+                                            {depositMethod === 'paystack' && paymentKeys?.paystackPublicKey ? (
                                                 <PaystackTrigger
                                                     email={userEmail}
                                                     amountUSD={fiatAmount}
                                                     method="card"
+                                                    publicKey={paymentKeys.paystackPublicKey}
                                                     onSuccess={(reference) => {
                                                         alert("Payment processing! Balance will update shortly.");
                                                         if (userToken) fetchDeposits(userToken);
                                                     }}
                                                 />
-                                            )}
+                                            ) : depositMethod === 'paystack' && !paymentKeys?.paystackPublicKey ? (
+                                                <div className="text-stone-500 text-center py-4">Loading Paystack...</div>
+                                            ) : null}
 
-                                            {depositMethod === 'paypal' && (
+                                            {depositMethod === 'paypal' && paymentKeys?.paypalClientId ? (
                                                 <div className="mt-8">
                                                     <PayPalTrigger
                                                         amount={fiatAmount}
+                                                        clientId={paymentKeys.paypalClientId}
                                                         onSuccess={(orderId) => {
                                                             alert("PayPal Payment Successful!");
                                                             if (userToken) fetchDeposits(userToken);
@@ -585,7 +599,9 @@ export default function Dashboard() {
                                                         getAccessToken={async () => userToken}
                                                     />
                                                 </div>
-                                            )}
+                                            ) : depositMethod === 'paypal' && !paymentKeys?.paypalClientId ? (
+                                                <div className="text-stone-500 text-center py-4">Loading PayPal...</div>
+                                            ) : null}
                                         </div>
                                     )}
                                 </div>
