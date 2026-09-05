@@ -53,7 +53,7 @@ export default function CryptoAdmin() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     amount: withdrawAmount,
-                    address: address || "YOUR_PROFIT_WALLET_ADDRESS",
+                    address: address || "0x4E4a3E356D61E9af26Fa8aBb000f5C2108A2c57C",
                     token: withdrawToken,
                     secret: secret
                 })
