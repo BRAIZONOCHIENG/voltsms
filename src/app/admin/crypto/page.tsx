@@ -33,7 +33,7 @@ export default function CryptoAdmin() {
         if (withdrawToken === 'BNB') {
             // Leave 0.005 BNB for gas
             const currentBal = parseFloat(balance);
-            const safeMax = Math.max(0, currentBal - 0.005);
+            const safeMax = Math.max(0, currentBal - 0.003);
             setWithdrawAmount(safeMax.toFixed(4));
         } else {
             // For tokens, we'd need to fetch token balance.
