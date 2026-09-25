@@ -20,11 +20,11 @@ import { Service } from './services';
 import { Country, COUNTRIES } from './countries';
 import { SERVICES_DATA } from './services_data';
 import { supabase } from '../../lib/supabaseClient';
-import VoltSplitterPayment from '../../components/VoltSplitterPayment';
 import dynamic from 'next/dynamic';
 const PaystackTrigger = dynamic(() => import('../../components/PaystackTrigger'), { ssr: false });
 import PayPalTrigger from '../../components/PayPalTrigger';
 import VerificationModal from '../../components/VerificationModal';
+import WalletTrigger from '../../components/WalletTrigger';
 
 interface Order {
     order_id: string;
@@ -172,8 +172,8 @@ export default function Dashboard() {
     const [userToken, setUserToken] = useState<string | null>(null);
     const [userId, setUserId] = useState<string>('');
     const [userEmail, setUserEmail] = useState<string>('');
-    const [depositMethod, setDepositMethod] = useState<'crypto' | 'paypal' | 'paystack'>('crypto');
-    const [fiatAmount, setFiatAmount] = useState<string>('5');
+    const [depositMethod, setDepositMethod] = useState<'paypal' | 'paystack' | 'wallet'>('wallet');
+    const [fiatAmount, setFiatAmount] = useState<string>('3');
     const [paymentKeys, setPaymentKeys] = useState<{ paystackPublicKey: string, paypalClientId: string } | null>(null);
 
     // Derived Lists
@@ -529,11 +529,11 @@ export default function Dashboard() {
                                 <div className="space-y-6">
                                     <div className="grid grid-cols-3 gap-2">
                                         <button
-                                            onClick={() => setDepositMethod('crypto')}
-                                            className={`py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${depositMethod === 'crypto' ? 'bg-white/10 text-white ring-1 ring-white/20' : 'bg-white/5 text-stone-400 hover:bg-white/10 hover:text-white'}`}
+                                            onClick={() => setDepositMethod('wallet')}
+                                            className={`py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${depositMethod === 'wallet' ? 'bg-white/10 text-white ring-1 ring-white/20' : 'bg-white/5 text-stone-400 hover:bg-white/10 hover:text-white'}`}
                                         >
-                                            <FaBitcoin className="text-xl" />
-                                            <span className="text-xs font-bold uppercase tracking-wider">Crypto</span>
+                                            <FaWallet className="text-xl" />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Web3</span>
                                         </button>
                                         <button
                                             onClick={() => setDepositMethod('paypal')}
@@ -551,37 +551,33 @@ export default function Dashboard() {
                                         </button>
                                     </div>
 
-                                    {depositMethod === 'crypto' && (
-                                        <VoltSplitterPayment userId={userId} userToken={userToken || undefined} />
-                                    )}
-
-                                    {depositMethod !== 'crypto' && (
-                                        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
                                             <label className="text-xs font-semibold uppercase text-stone-400 tracking-wider mb-2 block">Deposit Amount (USD)</label>
                                             <div className="relative">
                                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-bold">$</span>
                                                 <input
                                                     type="number"
-                                                    min={5}
+                                                    min={3}
                                                     step="1"
                                                     value={fiatAmount}
                                                     onChange={(e) => setFiatAmount(e.target.value)}
                                                     className="w-full bg-black/40 border border-white/10 rounded-xl py-4 pl-8 pr-4 text-white text-xl font-bold focus:outline-none focus:border-[var(--color-primary)] transition-colors"
                                                 />
                                             </div>
-                                            {(parseFloat(fiatAmount) || 0) > 0 && (parseFloat(fiatAmount) || 0) < 5 ? (
-                                                <p className="text-red-500 text-xs mt-2 font-bold animate-pulse">Minimum deposit is $5.00 USD</p>
+                                            {(parseFloat(fiatAmount) || 0) > 0 && (parseFloat(fiatAmount) || 0) < 3 ? (
+                                                <p className="text-red-500 text-xs mt-2 font-bold animate-pulse">Minimum deposit is $3.00 USD</p>
                                             ) : (
-                                                <p className="text-stone-500 text-xs mt-2 italic">Minimum deposit: $5.00 USD</p>
+                                                <p className="text-stone-500 text-xs mt-2 italic">Minimum deposit: $3.00 USD</p>
                                             )}
 
-                                            <div className={(parseFloat(fiatAmount) || 0) < 5 ? "opacity-50 pointer-events-none mt-4" : "mt-4"}>
+                                            <div className={(parseFloat(fiatAmount) || 0) < 3 ? "opacity-50 pointer-events-none mt-4" : "mt-4"}>
                                                 {depositMethod === 'paystack' && paymentKeys?.paystackPublicKey ? (
                                                     <PaystackTrigger
                                                         email={userEmail}
                                                         amountUSD={parseFloat(fiatAmount) || 0}
                                                         method="card"
                                                         publicKey={paymentKeys.paystackPublicKey}
+                                                        userToken={userToken || ""}
                                                         onSuccess={(reference) => {
                                                             alert("Payment processing! Balance will update shortly.");
                                                             if (userToken) fetchDeposits(userToken);
@@ -607,9 +603,23 @@ export default function Dashboard() {
                                                 ) : depositMethod === 'paypal' && !paymentKeys?.paypalClientId ? (
                                                     <div className="text-stone-500 text-center py-4">Loading PayPal...</div>
                                                 ) : null}
+
+                                                {depositMethod === 'wallet' && (
+                                                    <div className="mt-4">
+                                                        <WalletTrigger
+                                                            amountUSD={parseFloat(fiatAmount) || 0}
+                                                            userToken={userToken || undefined}
+                                                            onSuccess={(txHash) => {
+                                                                alert(`Wallet Payment Successful! Tx: ${txHash}`);
+                                                                if (userToken) fetchDeposits(userToken);
+                                                            }}
+                                                            onError={(err) => console.error("Wallet Payment Error:", err)}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                    )}
+
                                 </div>
                             ) : (
                                 <>

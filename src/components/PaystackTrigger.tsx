@@ -9,11 +9,13 @@ interface PaystackTriggerProps {
     amountUSD: number;
     method: 'card' | 'mpesa';
     publicKey: string;
+    userToken: string;
     onSuccess: (reference: any) => void;
 }
 
-const PaystackTrigger: React.FC<PaystackTriggerProps> = ({ email, amountUSD, method, publicKey, onSuccess }) => {
-    const amountKES = Math.round(amountUSD * 130 * 100); // USD -> KES -> Cents
+const PaystackTrigger: React.FC<PaystackTriggerProps> = ({ email, amountUSD, method, publicKey, userToken, onSuccess }) => {
+    // We must charge in KES because the Paystack merchant account is not enabled for USD.
+    const amountKESCents = Math.round(amountUSD * 130 * 100); // USD -> KES -> Cents
     const [loading, setLoading] = React.useState(false);
 
     // Ensure email is valid or fallback to avoid Paystack errors if state is empty
@@ -22,10 +24,10 @@ const PaystackTrigger: React.FC<PaystackTriggerProps> = ({ email, amountUSD, met
     const config = {
         reference: (new Date()).getTime().toString(),
         email: safeEmail,
-        amount: amountKES, // Amount is in Kobo/Cents
+        amount: amountKESCents, // Amount is in KES Cents
         publicKey: publicKey,
         currency: 'KES',
-        channels: ['card', 'mobile_money'],
+        channels: ['card'], // Default to card only to prevent scaring global users with local payment methods
         metadata: {
             custom_fields: [
                 {
@@ -45,13 +47,34 @@ const PaystackTrigger: React.FC<PaystackTriggerProps> = ({ email, amountUSD, met
             whileTap={{ scale: 0.98 }}
             onClick={() => {
                 setLoading(true);
-                // Small timeout to allow state to update before the heavier script load potentially blocks UI? 
-                // Actually initializePayment is async internally but we can't await it easily.
                 setTimeout(() => {
                     initializePayment({
-                        onSuccess: (reference: any) => {
-                            setLoading(false);
-                            onSuccess(reference);
+                        onSuccess: async (reference: any) => {
+                            try {
+                                const res = await fetch('/api/payment/verify', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${userToken}`
+                                    },
+                                    body: JSON.stringify({
+                                        type: 'paystack',
+                                        reference: reference.reference || reference.transaction,
+                                        amount: amountUSD
+                                    })
+                                });
+                                
+                                if (!res.ok) {
+                                    throw new Error("Failed to verify payment on backend");
+                                }
+                                
+                                onSuccess(reference);
+                            } catch (err) {
+                                console.error(err);
+                                alert("Payment verification failed! Please contact support.");
+                            } finally {
+                                setLoading(false);
+                            }
                         },
                         onClose: () => {
                             setLoading(false);

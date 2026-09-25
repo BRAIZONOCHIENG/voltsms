@@ -91,7 +91,34 @@ const PayPalTrigger: React.FC<PayPalTriggerProps> = ({ amount, clientId, onSucce
                     }
                 },
                 onApprove: async (data: any, actions: any) => {
-                    onSuccess(data.orderID);
+                    try {
+                        const token = await getAccessToken();
+                        if (!token) throw new Error("No token");
+
+                        const res = await fetch('/api/payment/verify', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                type: 'paypal',
+                                orderID: data.orderID,
+                                amount: amount
+                            })
+                        });
+
+                        const verifyData = await res.json();
+                        if (!res.ok) {
+                            throw new Error(verifyData.detail || "Failed to verify PayPal payment");
+                        }
+
+                        onSuccess(data.orderID);
+                    } catch (err: any) {
+                        console.error(err);
+                        alert(`Verification Error: ${err.message}`);
+                        onError(err);
+                    }
                 },
                 onError: (err: any) => {
                     console.error("PayPal SDK Error:", err);
@@ -99,7 +126,7 @@ const PayPalTrigger: React.FC<PayPalTriggerProps> = ({ amount, clientId, onSucce
                 }
             }).render(paypalRef.current);
         }
-    }, [loaded, amount]); // Re-render if amount changes
+    }, [loaded, amount, getAccessToken, onSuccess, onError]); // Re-render if dependencies change
 
     if (error) return <div className="text-red-500 text-sm">{error}</div>;
 

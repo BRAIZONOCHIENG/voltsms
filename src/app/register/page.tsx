@@ -94,8 +94,8 @@ export default function Register() {
                 }
                 setRegistrationSuccess(true);
             } else if (data.user && data.session) {
-                // Auto-login success case (shouldn't happen with email confirm enabled, but safely handled)
-                setRegistrationSuccess(true);
+                // Auto-login success case (when email confirmation is disabled in Supabase)
+                router.push('/dashboard');
             }
         } catch (err) {
             setError('An unexpected error occurred');
